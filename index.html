@@ -345,8 +345,7 @@
 
             function getTemplatesList() {
                 const currentUrl = window.location.href;
-                console.log(currentUrl);
-                const url = currentUrl + '/templates';
+                const url = currentUrl + 'templates';
 
                 $.ajax({
                     url: url,
@@ -376,8 +375,7 @@
 
             function getSettingsList() {
                 const currentUrl = window.location.href;
-                console.log(currentUrl);
-                const url = currentUrl + '/settings';
+                const url = currentUrl + 'settings';
 
                 $.ajax({
                     url: url,
@@ -425,8 +423,7 @@
                 //     return;
                 // }
                 const currentUrl = window.location.href;
-                console.log(currentUrl);
-                const url = currentUrl + '/python';
+                const url = currentUrl + 'python';
 
                 var formData = new FormData($('#upload-form')[0]);
                 const selectValue = document.getElementById("templates-list").value;
@@ -462,8 +459,7 @@
 
             function saveSetting(obj) {
                 const currentUrl = window.location.href;
-                console.log(currentUrl);
-                const url = currentUrl + '/new_setting';
+                const url = currentUrl + 'new_setting';
 
                 $.ajax({
                     url: url,
@@ -498,8 +494,7 @@
                 const selectValue = document.getElementById("settings-list").value;
 
                 const currentUrl = window.location.href;
-                console.log(currentUrl);
-                const url = currentUrl + '/setting';
+                const url = currentUrl + 'setting';
 
                 $.ajax({
                     url: url,
