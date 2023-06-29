@@ -344,7 +344,9 @@
             }
 
             function getTemplatesList() {
-                const url='http://localhost:3000/templates';
+                const currentUrl = window.location.href;
+                console.log(currentUrl);
+                const url = currentUrl + '/templates';
 
                 $.ajax({
                     url: url,
@@ -373,7 +375,9 @@
             }
 
             function getSettingsList() {
-                const url='http://localhost:3000/settings';
+                const currentUrl = window.location.href;
+                console.log(currentUrl);
+                const url = currentUrl + '/settings';
 
                 $.ajax({
                     url: url,
@@ -420,7 +424,10 @@
                 //     showAlertContractor();
                 //     return;
                 // }
-                const url='http://localhost:3000/python';
+                const currentUrl = window.location.href;
+                console.log(currentUrl);
+                const url = currentUrl + '/python';
+
                 var formData = new FormData($('#upload-form')[0]);
                 const selectValue = document.getElementById("templates-list").value;
                 formData.append('template', selectValue);
@@ -454,7 +461,10 @@
             }
 
             function saveSetting(obj) {
-                const url='http://localhost:3000/new_setting';
+                const currentUrl = window.location.href;
+                console.log(currentUrl);
+                const url = currentUrl + '/new_setting';
+
                 $.ajax({
                     url: url,
                     method: 'POST',
@@ -487,7 +497,10 @@
             function loadCurrentSetting() {
                 const selectValue = document.getElementById("settings-list").value;
 
-                const url='http://localhost:3000/setting';
+                const currentUrl = window.location.href;
+                console.log(currentUrl);
+                const url = currentUrl + '/setting';
+
                 $.ajax({
                     url: url,
                     method: 'POST',
