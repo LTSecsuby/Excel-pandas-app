@@ -1,5 +1,5 @@
 # Start with an official Node.js runtime as a parent image
-FROM ubuntu:20.04
+FROM ubuntu:18.04
 
 # Install Python and other dependencies
 RUN apt-get update -y
