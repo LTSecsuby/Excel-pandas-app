@@ -41,8 +41,8 @@
                         </button>
                     </div>
                 </div>
-                <div class="download-button-wrapper">
-                    <a style="position: fixed; z-index: 10;" onclick="downloadCurrentTable()" class="btn-floating btn waves-effect waves-light"><i class="material-icons">cloud_download</i></a>
+                <div id="download-button-wrapper" class="download-button-wrapper">
+                    <a style="position: fixed; z-index: 10;" onclick="downloadCurrentTable()" class="btn-floating btn-large waves-effect waves-light"><i class="material-icons">cloud_download</i></a>
                 </div>
                 <div id="pandas-table">
                     
@@ -446,10 +446,19 @@
                 
             }
 
+            function showDownloadTable() {
+                const downloadTable = document.getElementById("download-button-wrapper");
+                downloadTable.style.display = 'flex';
+            }
+
+            function hiddenDownloadTable() {
+                const downloadTable = document.getElementById("download-button-wrapper");
+                downloadTable.style.display = 'none';
+            }
+
             function showLoader() {
                 const loader = document.getElementById("loader-wrapper");
                 loader.style.display = "flex";
-
             }
 
             function hiddenLoader() {
@@ -491,10 +500,12 @@
                             const errorText = document.getElementById("error-text").innerHTML = response.result;
                             const alert = document.getElementById("alert-popup-wrapper");
                             alert.style.display = "flex";
+                            hiddenDownloadTable();
                         } else {
                             const pandas = document.getElementById("pandas-table");
                             pandas.innerHTML = response.result;
                             pandas.className = response.filename;
+                            showDownloadTable();
                         }
                     },
                     error: function(xhr, textStatus, errorThrown) {
@@ -502,6 +513,7 @@
                         const errorText = document.getElementById("error-text").innerHTML = "Документ не найден";
                         const alert = document.getElementById("alert-popup-wrapper");
                         alert.style.display = "flex";
+                        hiddenDownloadTable();
                     }
                 });
             }
@@ -730,10 +742,10 @@
             }
 
             .download-button-wrapper {
-                display: flex;
                 align-items: center;
                 justify-content: center;
-                min-height: 50px;
+                min-height: 60px;
+                display: none;
             }
 
             .wrapper-setting {
