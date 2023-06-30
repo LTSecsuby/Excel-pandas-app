@@ -519,7 +519,10 @@
                     return;
                 }
 
-                window.open('http://localhost:3000/download?filename=' + filename);
+                const currentUrl = window.location.href;
+                const url = currentUrl + 'download?filename=' + filename;
+
+                window.open(url);
 
                 // const url='http://localhost:3000/download';
                 // $.ajax({
