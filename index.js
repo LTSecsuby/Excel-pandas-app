@@ -13,7 +13,6 @@ app.use(express.static('public'));
 app.use(fileUpload());
 // app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(checkAuthorization);
 
 const directoryTemplates = path.join(__dirname, `${process.env.PYTHON_TEMPLATES_PATH}`);
 const directorySettings = path.join(__dirname, `${process.env.SAVED_SETTINGS_FILES_PATH}`);
@@ -39,6 +38,8 @@ const checkAuthorization = (req, res, next) => {
   // Продолжение выполнения следующего middleware или основного запроса
   next();
 };
+
+app.use(checkAuthorization);
 
 function generateId() {
   const prefix = "id-";
