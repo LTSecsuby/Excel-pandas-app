@@ -116,6 +116,14 @@
                             <span class="card-title">Настройки</span>
                             <div style="display: flex; align-items: center;">
                                 <div class="input-field col s6">
+                                    <input style="color: white;" id="tokenInput" placeholder="Введите токен" type="text" class="validate">
+                                    <label style="color: #f37878; font-size: 20px;" for="tokenInput">Токен авторизации</label>
+                                </div>
+                                <a onclick="saveToken()" class="waves-effect waves-light btn red">Сохранить</a>
+                            </div>
+            
+                            <div style="display: flex; align-items: center;">
+                                <div class="input-field col s6">
                                     <input id="settingsNameInput" placeholder="Введите название" type="text" class="validate">
                                     <label style="color: #26a69a; font-size: 20px;" for="settingsNameInput">Добавить настройку</label>
                                 </div>
@@ -344,12 +352,20 @@
             }
 
             function getTemplatesList() {
+                if (!loadToken()) { return; }
+
                 const currentUrl = window.location.href;
                 const url = currentUrl + 'templates';
+
+                const token = loadToken();
+                if (!token) { return; }
 
                 $.ajax({
                     url: url,
                     method: "GET",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    },
                     dataType: 'json',
                     async: true,
                     success: function (templates) {
@@ -374,12 +390,20 @@
             }
 
             function getSettingsList() {
+                if (!loadToken()) { return; }
+
                 const currentUrl = window.location.href;
                 const url = currentUrl + 'settings';
+
+                const token = loadToken();
+                if (!token) { return; }
 
                 $.ajax({
                     url: url,
                     method: "GET",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    },
                     dataType: 'json',
                     async: true,
                     success: function (settings) {
@@ -425,6 +449,9 @@
                 const currentUrl = window.location.href;
                 const url = currentUrl + 'python';
 
+                const token = loadToken();
+                if (!token) { return; }
+
                 var formData = new FormData($('#upload-form')[0]);
                 const selectValue = document.getElementById("templates-list").value;
                 formData.append('template', selectValue);
@@ -432,6 +459,9 @@
                 $.ajax({
                     url: url,
                     method: 'POST',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    },
                     data: formData,
                     contentType: false,
                     processData: false,
@@ -461,9 +491,15 @@
                 const currentUrl = window.location.href;
                 const url = currentUrl + 'new_setting';
 
+                const token = loadToken();
+                if (!token) { return; }
+
                 $.ajax({
                     url: url,
                     method: 'POST',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    },
                     data: obj,
                     success: function(response) {
                         const errorText = document.getElementById("error-text").innerHTML = "Настройка сохранена";
@@ -493,6 +529,9 @@
             function loadCurrentSetting() {
                 const selectValue = document.getElementById("settings-list").value;
 
+                const token = loadToken();
+                if (!token) { return; }
+
                 const currentUrl = window.location.href;
                 const url = currentUrl + 'setting';
 
@@ -500,7 +539,7 @@
                     url: url,
                     method: 'POST',
                     beforeSend: function(xhr) {
-                        xhr.setRequestHeader('Authorization', 'Bearer ' + 'TOKEN');
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
                     },
                     data: { name: selectValue },
                     success: function(data) {
@@ -512,6 +551,24 @@
                         alert.style.display = "flex";
                     }
                 });
+            }
+
+            function saveToken() {
+                const token = document.getElementById('tokenInput').value;
+                if (!token) { return; }
+                localStorage.setItem('excel_pandas_token', token);
+                getTemplatesList();
+                getSettingsList();
+            }
+
+            function loadToken() {
+                const token = localStorage.getItem('excel_pandas_token')
+                console.log(token)
+                if (token) {
+                   const input = document.getElementById('tokenInput');
+                   input.value = token;
+                }
+                return token;
             }
 
             function downloadCurrentTable() {
@@ -554,6 +611,7 @@
                 return false;
             }
 
+            loadToken();
             getTemplatesList();
             getSettingsList();
 

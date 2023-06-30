@@ -19,11 +19,14 @@ const directorySettings = path.join(__dirname, `${process.env.SAVED_SETTINGS_FIL
 const directoryOriginalFiles = path.join(__dirname, `${process.env.SAVED_FILES_PATH}`);
 const directoryModifyFiles = path.join(__dirname, `${process.env.PYTHON_SAVED_FILES_PATH}`);
 const directoryErrors = path.join(__dirname, `${process.env.SAVED_ERRPR_PATH}`);
-const directoryToken = path.join(__dirname, `${process.env.TOKEN}`);
 
 const checkAuthorization = (req, res, next) => {
   // Получение токена из запроса
-  const token = req.headers.authorization;
+  const authorizationHeader = req.headers.authorization;
+  let token = null;
+  if (authorizationHeader) {
+    token = authorizationHeader.replace(/^Bearer\s+/, "");
+  }
 
   // Проверка наличия токена
   if (!token) {
@@ -31,10 +34,10 @@ const checkAuthorization = (req, res, next) => {
   }
 
   // Проверка валидности токена (вы можете использовать ваш метод проверки токена здесь)
-  if (token !== directoryToken) {
+  if (token !== process.env.TOKEN) {
     return res.sendFile(__dirname + '/index.html');
   }
-
+  
   // Продолжение выполнения следующего middleware или основного запроса
   next();
 };
