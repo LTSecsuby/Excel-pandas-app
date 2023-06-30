@@ -146,12 +146,12 @@ app.post('/download', function(req, res){
         return res.status(500).send('Failed to download file');
       }
       // удаление файла
-      fs.unlink(file, (err) => {
-        if (err) {
-          console.error(err);
-        }
-        console.log(`File ${filename} deleted`);
-      });
+      // fs.unlink(file, (err) => {
+      //   if (err) {
+      //     console.error(err);
+      //   }
+      //   console.log(`File ${filename} deleted`);
+      // });
     });
   });
 });

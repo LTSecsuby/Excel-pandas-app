@@ -597,15 +597,16 @@
                         // Создаем ссылку для скачивания
                         const blob = new Blob([data.response], {type: contentType});
                         const downloadUrl = URL.createObjectURL(blob);
-                        
+
                         // Создаем ссылку для скачивания с помощью созданной ссылки
                         const a = document.createElement('a');
                         a.href = downloadUrl;
                         a.download = filename;
                         a.click();
-
-                        // Удаляем ссылку и освобождаем ресурсы
-                        URL.revokeObjectURL(downloadUrl);
+                        setTimeout(() => {
+                            // Удаляем ссылку и освобождаем ресурсы
+                            URL.revokeObjectURL(downloadUrl);
+                        }, 0)
                     },
                     error: function(xhr, textStatus, errorThrown) {
                         const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
