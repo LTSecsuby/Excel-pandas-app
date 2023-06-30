@@ -27,12 +27,12 @@ const checkAuthorization = (req, res, next) => {
 
   // Проверка наличия токена
   if (!token) {
-    return res.status(401).json({ message: 'Требуется токен авторизации' });
+    return res.sendFile(__dirname + '/index.html');
   }
 
   // Проверка валидности токена (вы можете использовать ваш метод проверки токена здесь)
   if (token !== directoryToken) {
-    return res.status(401).json({ message: 'Недействительный токен авторизации' });
+    return res.sendFile(__dirname + '/index.html');
   }
 
   // Продолжение выполнения следующего middleware или основного запроса
