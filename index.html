@@ -579,8 +579,11 @@
                     return;
                 }
 
+                const token = loadToken();
+                if (!token) { return; }
+
                 const currentUrl = window.location.href;
-                const url = currentUrl + 'download?filename=' + filename;
+                const url = currentUrl + 'download?filename=' + filename + '&authorization=' + token; // Замените 'ваш_токен' на фактический токен авторизации
 
                 window.open(url);
 
