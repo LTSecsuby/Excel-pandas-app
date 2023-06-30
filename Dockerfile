@@ -4,8 +4,8 @@ FROM python:3.8
 
 # Install Python and other dependencies
 RUN apt-get update -y
-RUN apt-get install -y python-pip python-dev build-essential
-
+RUN apt-get install -y python3
+RUN apt-get install -y python3-pip
 
 # Set the working directory to /app
 WORKDIR /app
