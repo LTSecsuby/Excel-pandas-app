@@ -5,12 +5,10 @@ FROM node:18
 WORKDIR /app
 
 # Install Python and other dependencies
-RUN apt-get update && \
-    apt-get install -y python3 && \
-    apt install python3-pip && \
-    apt install python-pip && \
-    pip3 --version  && \
-    pip --version
+RUN apt-get update
+RUN apt-get install -y python3
+RUN apt install python3-pip
+RUN apt install python-pip
 
 # Copy the package.json and package-lock.json files to the working directory
 COPY package*.json ./
