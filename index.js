@@ -158,7 +158,7 @@ app.post('/python', (req, res) => {
     template = "default_template";
   }
 
-  const script = `python ${directoryTemplates}\\${template} ` + `${newName}`;
+  const script = `python3 ${directoryTemplates}\\${template} ` + `${newName}`;
   // Выполняем скрипт Python с передачей имени файла в качестве аргумента
   exec(script, (error, stdout, stderr) => {
     if (error) {
