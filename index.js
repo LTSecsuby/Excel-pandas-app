@@ -132,7 +132,7 @@ app.post('/new_setting', (req, res) => {
 
 app.get('/download', function(req, res){
   const filename = req.body.filename;
-  const file = path.join(directoryModifyFiles, filename);
+  const file = directoryModifyFiles + `/${filename}`;
   // проверка наличия файла
   fs.access(file, fs.constants.F_OK, (err) => {
     if (err) {
