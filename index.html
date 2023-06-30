@@ -594,7 +594,7 @@
                     data: { filename: filename },
                     success: function(data) {
                         // Создаем ссылку для скачивания
-                        const blob = new Blob([data.response], {type: xhr.getResponseHeader('Content-Type')});
+                        const blob = new Blob([data.response], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
                         const downloadUrl = URL.createObjectURL(blob);
                         
                         // Создаем ссылку для скачивания с помощью созданной ссылки
