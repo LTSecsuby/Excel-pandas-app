@@ -5,7 +5,7 @@ FROM node:18
 RUN apt-get update -y
 RUN apt-get install -y python3
 RUN apt-get install -y python3-pip
-RUN python --version
+RUN python3 --version
 RUN pip3 --version
 
 COPY . /app
