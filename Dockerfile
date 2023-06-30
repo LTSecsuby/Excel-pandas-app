@@ -11,13 +11,13 @@ WORKDIR /app
 
 # Install Node npm
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y nodejs \
+    apt-get install -y nodejs && \
     npm
 
 RUN echo "Node: " && node -v
 RUN echo "NPM: " && npm -v
-RUN echo "python3: " && python3 -v
-RUN echo "PIP: " && pip3 -v
+RUN echo "python3: " && python --version
+RUN echo "PIP: " && pip3 --version
 
 # Copy the package.json and package-lock.json files to the working directory
 COPY package*.json ./app
