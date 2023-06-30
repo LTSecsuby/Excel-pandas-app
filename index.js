@@ -130,7 +130,7 @@ app.post('/new_setting', (req, res) => {
   // const obj = JSON.parse(data);
 });
 
-app.get('/download', function(req, res){
+app.post('/download', function(req, res){
   const filename = req.body.filename;
   const file = directoryModifyFiles + `/${filename}`;
   // проверка наличия файла
