@@ -16,7 +16,8 @@ RUN apt-get update && apt-get upgrade -y && \
 
 RUN echo "Node: " && node -v
 RUN echo "NPM: " && npm -v
-
+RUN echo "python3: " && python3 -v
+RUN echo "PIP: " && pip3 -v
 
 # Copy the package.json and package-lock.json files to the working directory
 COPY package*.json ./app
@@ -25,7 +26,7 @@ COPY package*.json ./app
 RUN npm install
 
 # Install Python dependencies
-COPY requirements.txt .
+COPY requirements.txt ./app
 RUN pip3 install -r requirements.txt
 
 # Start the application
