@@ -168,7 +168,7 @@ app.post('/python', (req, res) => {
       console.error(`Error: ${stderr}`);
       res.status(200).json({ result: stderr });
     } else {
-      if (stdout === 'False\r\n') {
+      if (stdout === 'False\n') {
         const result = 'Входные данные не соответствуют скрипту';
         res.status(200).json({ result: result });
         res.on('finish', () => {
@@ -180,7 +180,7 @@ app.post('/python', (req, res) => {
             console.error(err);
           }
         });
-      } else if (stdout === 'True\r\n') {
+      } else if (stdout === 'True\n') {
         const filePath = directoryModifyFiles + `/${newName}`;
         const filePathHtml = filePath.split('.')[0] + '.html'; 
         fs.readFile(filePathHtml, 'utf8', (err, html) => {
@@ -200,7 +200,7 @@ app.post('/python', (req, res) => {
             });
           }
         });
-      } else if (stdout === 'unknowns_division\r\n') {
+      } else if (stdout === 'unknowns_division\n') {
         const filename = 'unknowns_division.json';
         const filePath = path.join(directoryErrors, filename);
         fs.readFile(filePath, 'utf8', (err, data) => {
