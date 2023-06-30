@@ -26,7 +26,7 @@ RUN npm install
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 # Start the application
 CMD [ "npm", "start" ]
