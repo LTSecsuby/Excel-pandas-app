@@ -25,7 +25,7 @@ def sum_all(row):
 if len(sys.argv) < 2:
     print('No file given')
 else:
-    excel_file = createEnvPath('SAVED_FILES_PATH', '/' + sys.argv[1])
+    excel_file = createEnvPath('SAVED_FILES_PATH', sys.argv[1])
     data = pd.read_excel(excel_file, sheet_name='Sheet1')
     # pivot = pd.pivot_table(
     #     data,
