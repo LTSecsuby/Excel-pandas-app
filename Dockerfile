@@ -5,8 +5,7 @@ FROM node:18
 RUN apt-get update -y
 RUN apt-get install -y python3
 RUN apt-get install -y python3-pip
-RUN python3 --version
-RUN pip3 --version
+
 
 COPY . /app
 WORKDIR /app
@@ -19,6 +18,9 @@ RUN apt-get update && apt-get upgrade -y && \
 RUN echo "Node: " && node -v
 RUN echo "NPM: " && npm -v
 
+RUN python3 --version
+RUN pip3 --version
+
 # Copy the package.json and package-lock.json files to the working directory
 COPY package*.json ./app
 
@@ -27,7 +29,7 @@ RUN npm install
 
 # Install Python dependencies
 COPY requirements.txt ./app
-RUN pip3 install -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Start the application
 CMD [ "npm", "start" ]
