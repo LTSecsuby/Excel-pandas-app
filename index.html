@@ -592,9 +592,10 @@
                         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
                     },
                     data: { filename: filename },
-                    success: function(data) {
+                    success: function(data, textStatus, xhr) {
+                        const contentType = xhr.getResponseHeader('Content-Type');
                         // Создаем ссылку для скачивания
-                        const blob = new Blob([data.response], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+                        const blob = new Blob([data.response], {type: contentType});
                         const downloadUrl = URL.createObjectURL(blob);
                         
                         // Создаем ссылку для скачивания с помощью созданной ссылки
