@@ -499,6 +499,9 @@
                 $.ajax({
                     url: url,
                     method: 'POST',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + 'TOKEN');
+                    },
                     data: { name: selectValue },
                     success: function(data) {
                         loadTable(data.result);

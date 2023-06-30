@@ -13,12 +13,32 @@ app.use(express.static('public'));
 app.use(fileUpload());
 // app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(checkAuthorization);
 
 const directoryTemplates = path.join(__dirname, `${process.env.PYTHON_TEMPLATES_PATH}`);
 const directorySettings = path.join(__dirname, `${process.env.SAVED_SETTINGS_FILES_PATH}`);
 const directoryOriginalFiles = path.join(__dirname, `${process.env.SAVED_FILES_PATH}`);
 const directoryModifyFiles = path.join(__dirname, `${process.env.PYTHON_SAVED_FILES_PATH}`);
 const directoryErrors = path.join(__dirname, `${process.env.SAVED_ERRPR_PATH}`);
+const directoryToken = path.join(__dirname, `${process.env.TOKEN}`);
+
+const checkAuthorization = (req, res, next) => {
+  // Получение токена из запроса
+  const token = req.headers.authorization;
+
+  // Проверка наличия токена
+  if (!token) {
+    return res.status(401).json({ message: 'Требуется токен авторизации' });
+  }
+
+  // Проверка валидности токена (вы можете использовать ваш метод проверки токена здесь)
+  if (token !== directoryToken) {
+    return res.status(401).json({ message: 'Недействительный токен авторизации' });
+  }
+
+  // Продолжение выполнения следующего middleware или основного запроса
+  next();
+};
 
 function generateId() {
   const prefix = "id-";
