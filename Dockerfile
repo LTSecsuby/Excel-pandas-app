@@ -5,19 +5,19 @@ FROM node:18
 RUN apt-get update -y
 RUN apt-get install -y python3
 RUN apt-get install -y python3-pip
+RUN python --version
+RUN pip3 --version
 
 COPY . /app
 WORKDIR /app
 
 # Install Node npm
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y nodejs && \
+    apt-get install -y nodejs \
     npm
 
 RUN echo "Node: " && node -v
 RUN echo "NPM: " && npm -v
-RUN echo "python3: " && python --version
-RUN echo "PIP: " && pip3 --version
 
 # Copy the package.json and package-lock.json files to the working directory
 COPY package*.json ./app
