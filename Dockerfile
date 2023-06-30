@@ -1,14 +1,15 @@
 # Start with an official Node.js runtime as a parent image
 FROM node:18
+FROM python:3.8
 
+
+COPY . /app
 # Set the working directory to /app
 WORKDIR /app
 
 # Install Python and other dependencies
-RUN apt-get update
-RUN apt-get install -y python
-RUN apt-get install python-pip
-RUN pip --version
+RUN apt-get update -y
+RUN apt-get install -y python-pip python-dev build-essential
 
 # Copy the package.json and package-lock.json files to the working directory
 COPY package*.json ./
