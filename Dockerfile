@@ -1,7 +1,5 @@
 # Start with an official Node.js runtime as a parent image
-
-FROM python:3.8
-FROM node:18
+FROM ubuntu:20.04
 
 # Install Python and other dependencies
 RUN apt-get update -y
@@ -28,7 +26,7 @@ RUN npm install
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip3 install -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Start the application
 CMD [ "npm", "start" ]
