@@ -14,25 +14,25 @@
         <div>
             <div class="wrapper">
                 <div class="wrapper-uploader card blue-grey darken-1">
-                    <div class="card-content white-text">
+                    <div style="position: relative;" class="card-content white-text">
                         <span class="card-title">Меню</span>
                         <a onclick="showSettingsPopup()" class="waves-effect waves-light btn">Настройки</a>
                         <div class="uploader">
-                            <!-- <form id="upload-form" enctype="multipart/form-data">
-                                <input type="file" name="file" accept=".xls,.xlsx">
-                            </form> -->
                             <form id="upload-form" enctype="multipart/form-data">
                                 <div style="display: flex; align-items: center;" class="file-field input-field">
                                     <div class="btn-floating waves-effect waves-light">
-                                        <i class="material-icons">cloud_download</i>
+                                        <i class="material-icons">file_upload</i>
                                         <input type="file" name="file" accept=".xls,.xlsx">
                                     </div>
                                     <div style="width: 80%;" class="file-path-wrapper">
-                                        <input style="color: white; border-bottom: 1px solid;" disabled class="file-path" type="text">
+                                        <input placeholder="Загрузите excel" style="color: white; border-bottom: 1px solid;" disabled class="file-path" type="text">
                                     </div>
                                 </div>
                             </form>
-                            <select style="display: block;" id="templates-list"></select>
+                            <div style="display: flex; align-items: center; justify-content: space-around;">
+                                <select style="display: block; width: 80%;" id="templates-list"></select>
+                                <a onclick="downloadCurrentTemplate()" class="btn-floating btn waves-effect waves-light"><i class="material-icons">cloud_download</i></a>
+                            </div>
                         </div>
                     </div>
                     <div class="card-action">
@@ -42,7 +42,7 @@
                     </div>
                 </div>
                 <div class="download-button-wrapper">
-                    <a style="position: fixed; z-index: 10;" onclick="downloadCurrentTable()" class="btn-floating btn waves-effect waves-light"><i class="material-icons">cloud_upload</i></a>
+                    <a style="position: fixed; z-index: 10;" onclick="downloadCurrentTable()" class="btn-floating btn waves-effect waves-light"><i class="material-icons">cloud_download</i></a>
                 </div>
                 <div id="pandas-table">
                     
@@ -113,36 +113,55 @@
                     <div>
                         <div class="card blue-grey darken-1">
                             <div class="card-content white-text">
-                            <span class="card-title">Настройки</span>
-                            <div style="display: flex; align-items: center;">
-                                <div class="input-field col s6">
-                                    <input style="color: white;" id="tokenInput" placeholder="Введите токен" type="text" class="validate">
-                                    <label style="color: #f37878; font-size: 20px;" for="tokenInput">Токен авторизации</label>
+                                <span class="card-title">Настройки</span>
+                                <div class="close-action">
+                                    <a onclick="closeSettingsPopup()" class="btn-floating btn waves-effect waves-light red"><i class="material-icons">close</i></a>
                                 </div>
-                                <a onclick="saveToken()" class="waves-effect waves-light btn red">Сохранить</a>
-                            </div>
-            
-                            <div style="display: flex; align-items: center;">
-                                <div class="input-field col s6">
-                                    <input id="settingsNameInput" placeholder="Введите название" type="text" class="validate">
-                                    <label style="color: #26a69a; font-size: 20px;" for="settingsNameInput">Добавить настройку</label>
-                                </div>
-                                <a onclick="addNewSettingsItem()" class="btn-floating btn waves-effect waves-light"><i class="material-icons">add</i></a>
-                                </div>
-                                <div style="display: flex; align-items: center;">
-                                    <div class="input-field col s12">
-                                        <div>Выберите настройку</div>
-                                        <select id="settings-list" style="display: block;">
-                                        </select>
+                                <div style="display: flex;">
+                                    <div style="display: flex; align-items: center; margin-right: 25px;">
+                                        <div class="input-field col s6">
+                                            <input id="settingsNameInput" placeholder="Введите название" type="text" class="validate">
+                                            <label style="color: #26a69a; font-size: 20px;" for="settingsNameInput">Добавить настройку</label>
+                                        </div>
+                                        <a onclick="addNewSettingsItem()" class="btn-floating btn waves-effect waves-light"><i class="material-icons">add</i></a>
                                     </div>
-                                    <a onclick="loadCurrentSetting()" class="waves-effect waves-light btn">Загрузить настройку</a>
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="input-field col s12">
+                                            <div>Выберите настройку</div>
+                                            <select id="settings-list" style="display: block;">
+                                            </select>
+                                        </div>
+                                        <a onclick="loadCurrentSetting()" class="waves-effect waves-light btn">Загрузить настройку</a>
+                                    </div>
                                 </div>
                                 <div id="settingsItem" class="settings-items">
             
                                 </div>
                             </div>
                             <div class="card-action">
-                                <a onclick="closeSettingsPopup()" class="waves-effect waves-light btn red">Закрыть</a>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div style="display: flex; justify-content: center; align-items: center;">
+                                        <form id="python-upload-form" enctype="multipart/form-data">
+                                            <div style="display: flex; align-items: center;" class="file-field input-field">
+                                                <div class="btn-floating waves-effect waves-light">
+                                                    <i class="material-icons">file_upload</i>
+                                                    <input type="file" name="file" accept=".py">
+                                                </div>
+                                                <div style="width: 80%;" class="file-path-wrapper">
+                                                    <input placeholder="Загрузите скрипт" style="color: white; border-bottom: 1px solid;" disabled class="file-path" type="text">
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <a onclick="savePython()" class="waves-effect waves-light btn">Сохранить</a>
+                                    </div>
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="input-field col s6">
+                                            <input style="color: white;" id="tokenInput" placeholder="Введите токен" type="text" class="validate">
+                                            <label style="color: #f37878; font-size: 20px;" for="tokenInput">Токен авторизации</label>
+                                        </div>
+                                        <a onclick="saveToken()" class="waves-effect waves-light btn red">Сохранить</a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -487,6 +506,36 @@
                 });
             }
 
+            function savePython() {
+                const currentUrl = window.location.href;
+                const url = currentUrl + 'save_python';
+
+                const token = loadToken();
+                if (!token) { return; }
+
+                var formData = new FormData($('#python-upload-form')[0]);
+   
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    },
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    async: true,
+                    success: function(response) {
+                        getTemplatesList();
+                    },
+                    error: function(xhr, textStatus, errorThrown) {
+                        const errorText = document.getElementById("error-text").innerHTML = "Скрипт не сохранен";
+                        const alert = document.getElementById("alert-popup-wrapper");
+                        alert.style.display = "flex";
+                    }
+                });
+            }
+
             function saveSetting(obj) {
                 const currentUrl = window.location.href;
                 const url = currentUrl + 'new_setting';
@@ -571,6 +620,39 @@
                 return token;
             }
 
+            function downloadCurrentTemplate() {
+                const selectValue = document.getElementById("templates-list").value;
+
+                const token = loadToken();
+                if (!token) { return; }
+
+                const currentUrl = window.location.href;
+                const url = currentUrl + 'download_template?filename=' + selectValue;
+
+                fetch(url, {
+                    headers: {
+                        authorization: token
+                    }
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    // Create a download link
+                    const downloadLink = document.createElement('a');
+                    const objectUrl = URL.createObjectURL(blob);
+                    downloadLink.href = objectUrl;
+                    downloadLink.download = selectValue;
+
+                    downloadLink.click();
+
+                    URL.revokeObjectURL(objectUrl);
+                })
+                .catch(error => {
+                    const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
+                    const alert = document.getElementById("alert-popup-wrapper");
+                    alert.style.visibility = "visible";
+                });
+            }
+
             function downloadCurrentTable() {
                 const pandas = document.getElementById("pandas-table");
                 filename = pandas.className;
@@ -583,9 +665,7 @@
                 if (!token) { return; }
 
                 const currentUrl = window.location.href;
-                const url = currentUrl + 'download?filename=' + filename; // Замените 'ваш_токен' на фактический токен авторизации
-
-                // window.open(url);
+                const url = currentUrl + 'download?filename=' + filename;
 
                 fetch(url, {
                     headers: {
@@ -600,10 +680,8 @@
                     downloadLink.href = objectUrl;
                     downloadLink.download = filename;
 
-                    // Trigger the click event to initiate the download
                     downloadLink.click();
 
-                    // Clean up
                     URL.revokeObjectURL(objectUrl);
                 })
                 .catch(error => {
@@ -611,67 +689,7 @@
                     const alert = document.getElementById("alert-popup-wrapper");
                     alert.style.visibility = "visible";
                 });
-
-                // const url='http://localhost:3000/download';
-                // $.ajax({
-                //     url: url,
-                //     method: 'POST',
-                //     data: { filename: filename },
-                //     success: function(data) {
-                //         window.open('http://localhost:3000/download?filename=' + filename);
-                //     },
-                //     error: function(xhr, textStatus, errorThrown) {
-                //         const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
-                //         const alert = document.getElementById("alert-popup-wrapper");
-                //         alert.style.visibility = "visible";
-                //     }
-                // });
             }
-
-            // function downloadCurrentTable() {
-            //     const pandas = document.getElementById("pandas-table");
-            //     filename = pandas.className;
-
-            //     if (filename.length === 0) {
-            //         return;
-            //     }
-
-            //     const token = loadToken();
-            //     if (!token) { return; }
-
-            //     const currentUrl = window.location.href;
-            //     const url = currentUrl + 'download';
-
-            //     $.ajax({
-            //         url: url,
-            //         method: 'POST',
-            //         beforeSend: function(xhr) {
-            //             xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-            //         },
-            //         data: { filename: filename },
-            //         success: function(data, textStatus, xhr) {
-            //             const contentType = xhr.getResponseHeader('Content-Type');
-            //             // Создаем ссылку для скачивания
-            //             const blob = new Blob([data.response], {type: contentType});
-            //             const downloadUrl = URL.createObjectURL(blob);
-
-            //             // Создаем ссылку для скачивания с помощью созданной ссылки
-            //             const a = document.createElement('a');
-            //             a.href = downloadUrl;
-            //             a.download = filename;
-            //             a.click();
-            //             setTimeout(() => {
-            //                 // Удаляем ссылку и освобождаем ресурсы
-            //                 URL.revokeObjectURL(downloadUrl);
-            //             }, 0)
-            //         },
-            //         error: function(xhr, textStatus, errorThrown) {
-            //             const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
-            //             const alert = document.getElementById("alert-popup-wrapper");
-            //             alert.style.visibility = "visible";
-            //         }
-            //     });
-            // }
 
             function hasOption(value, select) {
                 options = select.options;
@@ -751,7 +769,7 @@
             }
 
             .settings-items {
-                height: 50vh;
+                height: 60vh;
                 display: flex;
             }
 
@@ -843,11 +861,17 @@
 
             .settings-popup {
                 width: 90%;
-                height: 85%;
+                height: 90%;
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
-                margin-bottom: 100px;
+                margin-bottom: 80px;
+            }
+
+            .close-action {
+                position: absolute;
+                right: 25px;
+                top: 25px;
             }
 
             .alert-popup {

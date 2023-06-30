@@ -130,32 +130,6 @@ app.post('/new_setting', (req, res) => {
   // const obj = JSON.parse(data);
 });
 
-app.get('/download', function(req, res){
-  const filename = req.query.filename;
-  const file = path.join(directoryModifyFiles, filename);
-  // проверка наличия файла
-  fs.access(file, fs.constants.F_OK, (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(404).send('File not found');
-    }
-    // загрузка файла
-    res.download(file, filename, (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).send('Failed to download file');
-      }
-      // удаление файла
-      fs.unlink(file, (err) => {
-        if (err) {
-          console.error(err);
-        }
-        console.log(`File ${filename} deleted`);
-      });
-    });
-  });
-});
-
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
@@ -256,6 +230,66 @@ app.post('/python', (req, res) => {
 
     }
     // res.send(output);
+  });
+});
+
+app.post('/save_python', (req, res) => {
+  if (!req.files || !req.files.file) {
+    return res.status(400).send('No file uploaded');
+  }
+
+  const { name, data } = req.files.file;
+
+  try {
+    // Сохраняем загруженный файл на диск
+    fs.writeFileSync(directoryTemplates + `/${name}`, data);
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+app.get('/download', function(req, res){
+  const filename = req.query.filename;
+  const file = path.join(directoryModifyFiles, filename);
+  // проверка наличия файла
+  fs.access(file, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(404).send('File not found');
+    }
+    // загрузка файла
+    res.download(file, filename, (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Failed to download file');
+      }
+      // удаление файла
+      fs.unlink(file, (err) => {
+        if (err) {
+          console.error(err);
+        }
+        console.log(`File ${filename} deleted`);
+      });
+    });
+  });
+});
+
+app.get('/download_template', function(req, res){
+  const filename = req.query.filename;
+  const file = path.join(directoryTemplates, filename);
+  // проверка наличия файла
+  fs.access(file, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(404).send('File not found');
+    }
+    // загрузка файла
+    res.download(file, filename, (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Failed to download file');
+      }
+    });
   });
 });
 
