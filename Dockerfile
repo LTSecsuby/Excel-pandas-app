@@ -2,14 +2,15 @@
 FROM node:18
 FROM python:3.8
 
-
-COPY . /app
-# Set the working directory to /app
-WORKDIR /app
-
 # Install Python and other dependencies
 RUN apt-get update -y
 RUN apt-get install -y python-pip python-dev build-essential
+
+
+# Set the working directory to /app
+WORKDIR /app
+
+
 
 # Copy the package.json and package-lock.json files to the working directory
 COPY package*.json ./
