@@ -8,7 +8,9 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y python3 && \
     apt install python3-pip && \
-    pip3 --version
+    apt install python-pip && \
+    pip3 --version  && \
+    pip --version
 
 # Copy the package.json and package-lock.json files to the working directory
 COPY package*.json ./
