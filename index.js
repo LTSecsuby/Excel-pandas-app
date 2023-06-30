@@ -130,8 +130,8 @@ app.post('/new_setting', (req, res) => {
   // const obj = JSON.parse(data);
 });
 
-app.post('/download', function(req, res){
-  const filename = req.body.filename;
+app.get('/download', function(req, res){
+  const filename = req.query.filename;
   const file = path.join(directoryModifyFiles, filename);
   // проверка наличия файла
   fs.access(file, fs.constants.F_OK, (err) => {
@@ -146,12 +146,12 @@ app.post('/download', function(req, res){
         return res.status(500).send('Failed to download file');
       }
       // удаление файла
-      // fs.unlink(file, (err) => {
-      //   if (err) {
-      //     console.error(err);
-      //   }
-      //   console.log(`File ${filename} deleted`);
-      // });
+      fs.unlink(file, (err) => {
+        if (err) {
+          console.error(err);
+        }
+        console.log(`File ${filename} deleted`);
+      });
     });
   });
 });

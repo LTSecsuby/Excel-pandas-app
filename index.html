@@ -583,38 +583,95 @@
                 if (!token) { return; }
 
                 const currentUrl = window.location.href;
-                const url = currentUrl + 'download';
+                const url = currentUrl + 'download?filename=' + filename; // Замените 'ваш_токен' на фактический токен авторизации
 
-                $.ajax({
-                    url: url,
-                    method: 'POST',
-                    beforeSend: function(xhr) {
-                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-                    },
-                    data: { filename: filename },
-                    success: function(data, textStatus, xhr) {
-                        const contentType = xhr.getResponseHeader('Content-Type');
-                        // Создаем ссылку для скачивания
-                        const blob = new Blob([data.response], {type: contentType});
-                        const downloadUrl = URL.createObjectURL(blob);
+                // window.open(url);
 
-                        // Создаем ссылку для скачивания с помощью созданной ссылки
-                        const a = document.createElement('a');
-                        a.href = downloadUrl;
-                        a.download = filename;
-                        a.click();
-                        setTimeout(() => {
-                            // Удаляем ссылку и освобождаем ресурсы
-                            URL.revokeObjectURL(downloadUrl);
-                        }, 0)
-                    },
-                    error: function(xhr, textStatus, errorThrown) {
-                        const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
-                        const alert = document.getElementById("alert-popup-wrapper");
-                        alert.style.visibility = "visible";
+                fetch(url, {
+                    headers: {
+                        authorization: token
                     }
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    // Create a download link
+                    const downloadLink = document.createElement('a');
+                    const objectUrl = URL.createObjectURL(blob);
+                    downloadLink.href = objectUrl;
+                    downloadLink.download = filename;
+
+                    // Trigger the click event to initiate the download
+                    downloadLink.click();
+
+                    // Clean up
+                    URL.revokeObjectURL(objectUrl);
+                })
+                .catch(error => {
+                    const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
+                    const alert = document.getElementById("alert-popup-wrapper");
+                    alert.style.visibility = "visible";
                 });
+
+                // const url='http://localhost:3000/download';
+                // $.ajax({
+                //     url: url,
+                //     method: 'POST',
+                //     data: { filename: filename },
+                //     success: function(data) {
+                //         window.open('http://localhost:3000/download?filename=' + filename);
+                //     },
+                //     error: function(xhr, textStatus, errorThrown) {
+                //         const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
+                //         const alert = document.getElementById("alert-popup-wrapper");
+                //         alert.style.visibility = "visible";
+                //     }
+                // });
             }
+
+            // function downloadCurrentTable() {
+            //     const pandas = document.getElementById("pandas-table");
+            //     filename = pandas.className;
+
+            //     if (filename.length === 0) {
+            //         return;
+            //     }
+
+            //     const token = loadToken();
+            //     if (!token) { return; }
+
+            //     const currentUrl = window.location.href;
+            //     const url = currentUrl + 'download';
+
+            //     $.ajax({
+            //         url: url,
+            //         method: 'POST',
+            //         beforeSend: function(xhr) {
+            //             xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            //         },
+            //         data: { filename: filename },
+            //         success: function(data, textStatus, xhr) {
+            //             const contentType = xhr.getResponseHeader('Content-Type');
+            //             // Создаем ссылку для скачивания
+            //             const blob = new Blob([data.response], {type: contentType});
+            //             const downloadUrl = URL.createObjectURL(blob);
+
+            //             // Создаем ссылку для скачивания с помощью созданной ссылки
+            //             const a = document.createElement('a');
+            //             a.href = downloadUrl;
+            //             a.download = filename;
+            //             a.click();
+            //             setTimeout(() => {
+            //                 // Удаляем ссылку и освобождаем ресурсы
+            //                 URL.revokeObjectURL(downloadUrl);
+            //             }, 0)
+            //         },
+            //         error: function(xhr, textStatus, errorThrown) {
+            //             const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
+            //             const alert = document.getElementById("alert-popup-wrapper");
+            //             alert.style.visibility = "visible";
+            //         }
+            //     });
+            // }
 
             function hasOption(value, select) {
                 options = select.options;
@@ -786,11 +843,10 @@
 
             .settings-popup {
                 width: 90%;
-                height: 85%;
+                height: 90%;
                 display: flex;
                 flex-direction: column;
                 justify-content: space-between;
-                margin-bottom: 100px;
             }
 
             .alert-popup {
