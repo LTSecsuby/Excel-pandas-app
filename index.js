@@ -1,5 +1,5 @@
 const express = require('express');
-const fileUpload = require('express-fileupload');
+const multer = require('multer');
 const { exec } = require('node:child_process');
 require('dotenv').config();
 const fs = require('fs');
@@ -8,17 +8,59 @@ const bodyParser = require('body-parser');
 const fsP = require('fs').promises;
 
 const app = express();
+app.use(express.json());
 
-app.use(express.static('public'));
-app.use(fileUpload());
-// app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
+
+function generateId() {
+  const prefix = "id-";
+  const randomNumber = Math.random().toString(36).substring(2);
+  return prefix + randomNumber;
+}
+
+function deleteFiles(deleteList) {
+  try {
+    deleteList.forEach(file => {
+      // Удаляем файлы с диска
+      fs.unlinkSync(directoryOriginalFiles + `/${file}`);
+      console.log('File deleted');
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 const directoryTemplates = path.join(__dirname, `${process.env.PYTHON_TEMPLATES_PATH}`);
 const directorySettings = path.join(__dirname, `${process.env.SAVED_SETTINGS_FILES_PATH}`);
 const directoryOriginalFiles = path.join(__dirname, `${process.env.SAVED_FILES_PATH}`);
 const directoryModifyFiles = path.join(__dirname, `${process.env.PYTHON_SAVED_FILES_PATH}`);
 const directoryErrors = path.join(__dirname, `${process.env.SAVED_ERRPR_PATH}`);
+
+const storage_excel = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, directoryOriginalFiles)
+  },
+  filename: function (req, file, cb) {
+    let template = req.body.template;
+    if (!template) {
+      template = "default_template.py";
+    }
+    const savedFile = template + '_' + generateId() + '.xlsx';
+    cb(null, savedFile);
+  }
+});
+const multer_upload_excel = multer({ storage: storage_excel })
+
+const storage_script = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, directoryTemplates)
+  },
+  filename: function (req, file, cb) {
+    cb(null, req.body.fileName);
+  }
+});
+const multer_upload_script = multer({ storage: storage_script })
 
 const checkAuthorization = (req, res, next) => {
   // Получение токена из запроса
@@ -30,25 +72,19 @@ const checkAuthorization = (req, res, next) => {
 
   // Проверка наличия токена
   if (!token) {
-    return res.sendFile(__dirname + '/index.html');
+    return res.sendFile(__dirname + '/auth.html');
   }
 
   // Проверка валидности токена (вы можете использовать ваш метод проверки токена здесь)
   if (token !== process.env.TOKEN) {
-    return res.sendFile(__dirname + '/index.html');
+    return res.status(401).json(false);
   }
-  
+
   // Продолжение выполнения следующего middleware или основного запроса
   next();
 };
 
 app.use(checkAuthorization);
-
-function generateId() {
-  const prefix = "id-";
-  const randomNumber = Math.random().toString(36).substring(2);
-  return prefix + randomNumber;
-}
 
 app.get('/templates', (req, res) => {
   fs.readdir(directoryTemplates, function (err, templates) {
@@ -134,29 +170,26 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.post('/python', (req, res) => {
-  if (!req.files || !req.files.file) {
-    return res.status(400).send('No file uploaded');
+app.post('/python', multer_upload_excel.array('files'), (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).send('No files uploaded');
   }
 
-  const template = req.body.template;
-
-  const { name, data } = req.files.file;
-
-  const newName = generateId() + '.xlsx';
-
-  try {
-    // Сохраняем загруженный файл на диск
-    fs.writeFileSync(directoryOriginalFiles + `/${newName}`, data);
-  } catch (err) {
-    console.error(err);
-  }
-
+  let template = req.body.template;
   if (!template) {
-    template = "default_template";
+    template = "default_template.py";
   }
 
-  const script = `python3 ${directoryTemplates}/${template} ` + `${newName}`;
+  let names = '';
+  const filesList = [];
+
+  req.files.forEach(file => {
+    names = names + `${file.filename} `;
+    filesList.push(file.filename);
+  });
+
+  const script = `python3 ${directoryTemplates}/${template} ` + `${names}`;
+
   // Выполняем скрипт Python с передачей имени файла в качестве аргумента
   exec(script, (error, stdout, stderr) => {
     if (error) {
@@ -170,26 +203,20 @@ app.post('/python', (req, res) => {
         const result = 'Входные данные не соответствуют скрипту';
         res.status(200).json({ result: result });
         res.on('finish', () => {
-          try {
-            // Удаляем файлы с диска
-            fs.unlinkSync(directoryOriginalFiles + `/${newName}`);
-            console.log('File deleted');
-          } catch (err) {
-            console.error(err);
-          }
+          deleteFiles(filesList);
         });
       } else if (stdout === 'True\n') {
-        const filePath = directoryModifyFiles + `/${newName}`;
-        const filePathHtml = filePath.split('.')[0] + '.html'; 
+        const filePath = directoryModifyFiles + `/${filesList[0]}`;
+        const filePathHtml = filePath.replace('.xlsx', '.html'); 
         fs.readFile(filePathHtml, 'utf8', (err, html) => {
           if (err) {
             res.status(500).send('Error reading file');
           } else {
-            res.status(200).json({ result: html, filename: newName });
+            res.status(200).json({ result: html, filename: filesList[0] });
             res.on('finish', () => {
+              deleteFiles(filesList);
               try {
                 // Удаляем файлы с диска
-                fs.unlinkSync(directoryOriginalFiles + `/${newName}`);
                 fs.unlinkSync(filePathHtml);
                 console.log('File deleted');
               } catch (err) {
@@ -212,9 +239,9 @@ app.post('/python', (req, res) => {
             }
             res.status(200).json({ result: result });
             res.on('finish', () => {
+              deleteFiles(filesList);
               try {
                 // Удаляем файлы с диска
-                fs.unlinkSync(directoryOriginalFiles + `/${newName}`);
                 fs.unlinkSync(filePath);
                 console.log('File deleted');
               } catch (err) {
@@ -233,19 +260,13 @@ app.post('/python', (req, res) => {
   });
 });
 
-app.post('/save_python', (req, res) => {
-  if (!req.files || !req.files.file) {
-    return res.status(400).send('No file uploaded');
+
+app.post('/save_python', multer_upload_script.array('files'), (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).send('No files uploaded');
   }
 
-  const { name, data } = req.files.file;
-
-  try {
-    // Сохраняем загруженный файл на диск
-    fs.writeFileSync(directoryTemplates + `/${name}`, data);
-  } catch (err) {
-    console.error(err);
-  }
+  res.status(200).json({ result: true });
 });
 
 app.get('/download', function(req, res){

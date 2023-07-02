@@ -22,10 +22,10 @@
                                 <div style="display: flex; align-items: center;" class="file-field input-field">
                                     <div class="btn-floating waves-effect waves-light">
                                         <i class="material-icons">file_upload</i>
-                                        <input type="file" name="file" accept=".xls,.xlsx">
+                                        <input id='excel-files' type="file" multiple name="files" accept=".xlsx">
                                     </div>
                                     <div style="width: 80%;" class="file-path-wrapper">
-                                        <input placeholder="Загрузите excel" style="color: white; border-bottom: 1px solid;" disabled class="file-path" type="text">
+                                        <input placeholder="Загрузите excel файлы" style="color: white; border-bottom: 1px solid;" type="text" class="file-path">
                                     </div>
                                 </div>
                             </form>
@@ -96,7 +96,7 @@
                     <div style="margin: 0 auto; overflow-y: scroll;" class="card horizontal">
                       <div class="card-stacked">
                         <div id="error-title" class="card-content">
-                            Ошибка
+                            Внимание
                         </div>
                         <div class="card-content">
                             <div id="error-text"></div>
@@ -139,13 +139,13 @@
                                 </div>
                             </div>
                             <div class="card-action">
-                                <div style="display: flex; justify-content: space-between;">
+                                <div style="display: flex;">
                                     <div style="display: flex; justify-content: center; align-items: center;">
                                         <form id="python-upload-form" enctype="multipart/form-data">
                                             <div style="display: flex; align-items: center;" class="file-field input-field">
                                                 <div class="btn-floating waves-effect waves-light">
                                                     <i class="material-icons">file_upload</i>
-                                                    <input type="file" name="file" accept=".py">
+                                                    <input id='python-files' type="file" name="file" accept=".py">
                                                 </div>
                                                 <div style="width: 80%;" class="file-path-wrapper">
                                                     <input placeholder="Загрузите скрипт" style="color: white; border-bottom: 1px solid;" disabled class="file-path" type="text">
@@ -153,13 +153,6 @@
                                             </div>
                                         </form>
                                         <a onclick="savePython()" class="waves-effect waves-light btn">Сохранить</a>
-                                    </div>
-                                    <div style="display: flex; align-items: center;">
-                                        <div class="input-field col s6">
-                                            <input style="color: white;" id="tokenInput" placeholder="Введите токен" type="text" class="validate">
-                                            <label style="color: #f37878; font-size: 20px;" for="tokenInput">Токен авторизации</label>
-                                        </div>
-                                        <a onclick="saveToken()" class="waves-effect waves-light btn red">Сохранить</a>
                                     </div>
                                 </div>
                             </div>
@@ -355,18 +348,18 @@
                 alert.style.display = "none";
             }
 
+            function showAlertPopup(text) {
+                const errorText = document.getElementById("error-text").innerHTML = text;
+                const alert = document.getElementById("alert-popup-wrapper");
+                alert.style.display = "flex";
+            }
+
             function closeSettingsPopup() {
                 const alert = document.getElementById("settings-popup-wrapper");
                 alert.style.display = "none";
             }
             function showSettingsPopup() {
                 const alert = document.getElementById("settings-popup-wrapper");
-                alert.style.display = "flex";
-            }
-
-            function showAlertContractor() {
-                const errorText = document.getElementById("error-text").innerHTML = "Список подрядчиков пуст";
-                const alert = document.getElementById("alert-popup-wrapper");
                 alert.style.display = "flex";
             }
 
@@ -400,9 +393,7 @@
                         });
                     },
                     error: function (error) {
-                        const errorText = document.getElementById("error-text").innerHTML = "Отсутствуют шаблоны";
-                        const alert = document.getElementById("alert-popup-wrapper");
-                        alert.style.display = "flex";
+                        showAlertPopup("Отсутствуют шаблоны");
                     }
                 });
                 
@@ -438,9 +429,7 @@
                         });
                     },
                     error: function (error) {
-                        const errorText = document.getElementById("error-text").innerHTML = "Настройки не загружены";
-                        const alert = document.getElementById("alert-popup-wrapper");
-                        alert.style.display = "flex";
+                        showAlertPopup("Настройки не загружены");
                     }
                 });
                 
@@ -467,8 +456,6 @@
             }
 
             function sendFile() {
-                showLoader();
-
                 // const contractors = document.getElementById("contractor-list");
                 // if (contractors.childElementCount === 0) {
                 //     showAlertContractor();
@@ -479,42 +466,43 @@
 
                 const token = loadToken();
                 if (!token) { return; }
+                showLoader();
 
-                var formData = new FormData($('#upload-form')[0]);
+                const files = document.getElementById("excel-files");
+                const formData = new FormData();
+
                 const selectValue = document.getElementById("templates-list").value;
                 formData.append('template', selectValue);
 
-                $.ajax({
-                    url: url,
+                for (let i = 0; i < files.files.length; i++) {
+                    formData.append("files", files.files[i]);
+                }
+
+                fetch(url, {
                     method: 'POST',
-                    beforeSend: function(xhr) {
-                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-                    },
-                    data: formData,
-                    contentType: false,
-                    processData: false,
-                    async: true,
-                    success: function(response) {
-                        hiddenLoader();
-                        if (!response.filename) {
-                            const errorText = document.getElementById("error-text").innerHTML = response.result;
-                            const alert = document.getElementById("alert-popup-wrapper");
-                            alert.style.display = "flex";
-                            hiddenDownloadTable();
-                        } else {
-                            const pandas = document.getElementById("pandas-table");
-                            pandas.innerHTML = response.result;
-                            pandas.className = response.filename;
-                            showDownloadTable();
-                        }
-                    },
-                    error: function(xhr, textStatus, errorThrown) {
-                        hiddenLoader();
-                        const errorText = document.getElementById("error-text").innerHTML = "Документ не найден";
-                        const alert = document.getElementById("alert-popup-wrapper");
-                        alert.style.display = "flex";
-                        hiddenDownloadTable();
+                    body: formData,
+                    headers: {
+                        authorization: token
                     }
+                })
+                .then(response => response.json())
+                .then((data) => {
+                    hiddenLoader();
+                    console.log(data.filename)
+                    if (!data.filename) {
+                        showAlertPopup(data.result);
+                        hiddenDownloadTable();
+                    } else {
+                        const pandas = document.getElementById("pandas-table");
+                        pandas.innerHTML = data.result;
+                        pandas.className = data.filename;
+                        showDownloadTable();
+                    }
+                })
+                .catch((err) => {
+                    hiddenLoader();
+                    showAlertPopup("Документ не найден");
+                    hiddenDownloadTable();
                 });
             }
 
@@ -524,9 +512,31 @@
 
                 const token = loadToken();
                 if (!token) { return; }
+                showLoader();
 
-                var formData = new FormData($('#python-upload-form')[0]);
-   
+                const files = document.getElementById("python-files");
+                const formData = new FormData();
+                formData.append('fileName', files.files[0].name);
+                formData.append("files", files.files[0]);
+
+                fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        authorization: token
+                    }
+                })
+                .then(response => response.json())
+                .then((data) => {
+                    hiddenLoader();
+                    getTemplatesList();
+                })
+                .catch((err) => {
+                    hiddenLoader();
+                    showAlertPopup("Скрипт не сохранен");
+                });
+
+
                 $.ajax({
                     url: url,
                     method: 'POST',
@@ -541,9 +551,7 @@
                         getTemplatesList();
                     },
                     error: function(xhr, textStatus, errorThrown) {
-                        const errorText = document.getElementById("error-text").innerHTML = "Скрипт не сохранен";
-                        const alert = document.getElementById("alert-popup-wrapper");
-                        alert.style.display = "flex";
+                        showAlertPopup("Скрипт не сохранен");
                     }
                 });
             }
@@ -563,9 +571,7 @@
                     },
                     data: obj,
                     success: function(response) {
-                        const errorText = document.getElementById("error-text").innerHTML = "Настройка сохранена";
-                        const alert = document.getElementById("alert-popup-wrapper");
-                        alert.style.display = "flex";
+                        showAlertPopup("Настройка сохранена");
 
                         const name = obj.title + '.json';
                         const select = document.getElementById("settings-list");
@@ -580,9 +586,7 @@
                         }
                     },
                     error: function(xhr, textStatus, errorThrown) {
-                        const errorText = document.getElementById("error-text").innerHTML = "Настройка не сохранена";
-                        const alert = document.getElementById("alert-popup-wrapper");
-                        alert.style.display = "flex";
+                        showAlertPopup("Настройка не сохранена");
                     }
                 });
             }
@@ -607,29 +611,13 @@
                         loadTable(data.result);
                     },
                     error: function(xhr, textStatus, errorThrown) {
-                        const errorText = document.getElementById("error-text").innerHTML = "Настройки не загружены";
-                        const alert = document.getElementById("alert-popup-wrapper");
-                        alert.style.display = "flex";
+                        showAlertPopup("Настройки не загружены");
                     }
                 });
             }
 
-            function saveToken() {
-                const token = document.getElementById('tokenInput').value;
-                if (!token) { return; }
-                localStorage.setItem('excel_pandas_token', token);
-                getTemplatesList();
-                getSettingsList();
-            }
-
             function loadToken() {
-                const token = localStorage.getItem('excel_pandas_token')
-                console.log(token)
-                if (token) {
-                   const input = document.getElementById('tokenInput');
-                   input.value = token;
-                }
-                return token;
+                return localStorage.getItem('excel_pandas_token');
             }
 
             function downloadCurrentTemplate() {
@@ -659,9 +647,7 @@
                     URL.revokeObjectURL(objectUrl);
                 })
                 .catch(error => {
-                    const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
-                    const alert = document.getElementById("alert-popup-wrapper");
-                    alert.style.visibility = "visible";
+                    showAlertPopup("Нет файла");
                 });
             }
 
@@ -697,9 +683,7 @@
                     URL.revokeObjectURL(objectUrl);
                 })
                 .catch(error => {
-                    const errorText = document.getElementById("error-text").innerHTML = "Нет файла";
-                    const alert = document.getElementById("alert-popup-wrapper");
-                    alert.style.visibility = "visible";
+                    showAlertPopup("Нет файла");
                 });
             }
 

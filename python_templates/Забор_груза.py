@@ -123,8 +123,10 @@ def run_script(file_name):
         print(True)
 
 if len(sys.argv) < 2:
+    # нет файлов
     print(False)
 else:
+    # sys.argv[1] - загрузим первый файл, если их несколько то нужно загружать их в цикле for arg in sys.argv[1:]:
     excel_file = createEnvPath('SAVED_FILES_PATH', sys.argv[1])
 
     Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
