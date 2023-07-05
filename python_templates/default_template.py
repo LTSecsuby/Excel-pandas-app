@@ -35,6 +35,7 @@ elif len(sys.argv) == 2:
 
     data.to_excel(output_file_excel, index=False)
     data.to_html(output_file_html, index=False)
+    print(True)
 else:
     for arg in sys.argv[1:]:
         excel_file = createEnvPath('SAVED_FILES_PATH', arg)
