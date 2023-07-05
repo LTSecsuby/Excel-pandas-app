@@ -127,6 +127,37 @@ app.post('/setting', async (req, res) => {
   }
 });
 
+app.post('/instruction', async (req, res) => {
+  const file = req.body.template;
+
+  if (!file) {
+    return res.status(200).json({ result: null });
+  }
+
+  try {
+    const data = await fsP.readFile(directorySettings + '/' + "инструкции к скриптам.json", 'utf8');
+    const nameList = JSON.parse(data).table[0].values;
+    const instructionList = JSON.parse(data).table[1].values;
+    let instruction = null;
+
+    for (let i = 0; i < nameList.length; i++) {
+      const name = nameList[i];
+      if (name === file) {
+        instruction = instructionList[i];
+      }
+    }
+
+    if (instruction) {
+      res.status(200).json({ result: instruction });
+    } else {
+      res.status(200).json({ result: null });
+    }
+  } catch (err) {
+    console.log('Could not read file:', file, err);
+    res.status(200).json({ result: null });
+  }
+});
+
 // app.get('/setting', (req, res) => {
 //   fsP.readdir(directorySettings)
 //     .then(files => {

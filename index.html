@@ -30,8 +30,9 @@
                                 </div>
                             </form>
                             <div style="display: flex; align-items: center; justify-content: space-around;">
-                                <select style="display: block; width: 80%;" id="templates-list"></select>
+                                <select style="display: block; width: 75%;" id="templates-list"></select>
                                 <a onclick="downloadCurrentTemplate()" class="btn-floating btn waves-effect waves-light"><i class="material-icons">cloud_download</i></a>
+                                <a onclick="loadInstructionForCurrentTemplate()" class="btn-floating btn waves-effect waves-light"><i class="material-icons">info_outline</i></a>
                             </div>
                         </div>
                     </div>
@@ -105,6 +106,28 @@
                             <a onclick="closeAlertPopup()" class="waves-effect waves-light btn red">Закрыть</a>
                         </div>
                       </div>
+                    </div>
+                </div>
+            </div>
+            <div id="info-popup-wrapper">
+                <div class="info-popup">
+                    <div class="row" style="display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 60%; min-width: 400px;">
+                        <div style="width: 100%;">
+                          <div class="card blue-grey darken-1">
+                            <div class="card-content white-text">
+                                <span class="card-title">Инструкция</span>
+                                <div style="position: absolute;
+                                right: 5px;
+                                top: 5px;">
+                                    <a onclick="closeInfoPopup()" class="btn-floating btn-small waves-effect waves-light red"><i class="material-icons">close</i></a>
+                                </div>
+                              <p id="info-text"></p>
+                            </div>
+                          </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -184,7 +207,7 @@
                             <thead>
                                 <tr>
                                     <th>
-                                        <input type="text">
+                                        <textarea></textarea>
                                     </th>
                                     <th>
                                         <a onclick="addColumn(this, '${name}')" class="btn-floating btn-small waves-effect waves-light"><i class="material-icons">add</i></a>
@@ -205,7 +228,7 @@
             function addColumn(btn, tableName) {
                 var row = btn.parentNode.parentNode.innerHTML = `
                     <th>
-                        <input type="text">
+                        <textarea></textarea>
                     </th>
                 ` + btn.parentNode.parentNode.innerHTML;
                 var table = document.getElementById(tableName);
@@ -214,7 +237,7 @@
                 if (rows.length > 0) {
                     for (var i = 0; i < rows.length; i++) {
                         var cell = rows[i].insertCell(0);
-                        cell.innerHTML = '<input type="text">';
+                        cell.innerHTML = '<textarea></textarea>';
                     }
                 }
             }
@@ -231,7 +254,7 @@
                     if (i === cols - 1) {
                         newRow.insertCell(i).innerHTML = '<a onclick="deleteRow(this)" class="btn-floating btn-small waves-effect waves-light red"><i class="material-icons">delete</i></a>';
                     } else {
-                        newRow.insertCell(i).innerHTML = '<input type="text">';
+                        newRow.insertCell(i).innerHTML = '<textarea></textarea>';
                     }
                 }
             }
@@ -249,14 +272,14 @@
                 };
                 for (var i = 0; i < columns; i++) {
                     var th = thead.rows[0].cells[i];
-                    const input = th.getElementsByTagName("input")[0];
+                    const input = th.getElementsByTagName("textarea")[0];
                     if (input) {
-                        var key = th.getElementsByTagName("input")[0].value;
+                        var key = th.getElementsByTagName("textarea")[0].value;
                         const values = [];
                         for (var j = 0; j < rows.length; j++) {
                             var cells = rows[j].getElementsByTagName("td");
-                            var value = cells[i].getElementsByTagName("input")[0].value;
-                            values.push(value);
+                            var value = cells[i].getElementsByTagName("textarea")[0].value;
+                            values.push(value.replace(/\n/g, '<br/>'));
                         }
                         data.table.push({ key, values });
                     }
@@ -287,11 +310,20 @@
                 newTable.appendChild(thead);
                 newTable.appendChild(tbody);
 
+                // data.table.forEach(col => {
+                //     const th = document.createElement('th');
+                //     th.innerHTML = '<input type="text" value="' + col.key + '">';
+                //     tr.appendChild(th);
+                // });
+
                 data.table.forEach(col => {
                     const th = document.createElement('th');
-                    th.innerHTML = '<input type="text" value="' + col.key + '">';
+                    const textarea = document.createElement('textarea');
+                    textarea.value = col.key;
+                    th.appendChild(textarea);
                     tr.appendChild(th);
                 });
+
                 const thAdd = document.createElement('th');
                 thAdd.innerHTML = `<a onclick="addColumn(this, '${tableName}')" class="btn-floating btn-small waves-effect waves-light"><i class="material-icons">add</i></a>`;
                 tr.appendChild(thAdd);
@@ -311,11 +343,26 @@
                     }
                 }
 
+                // for (var i = 0; i < count; i++) {
+                //     var newRow = tbody.insertRow(i);
+                //     for (var j = 0; j < data.table.length; j++) {
+                //         var cell = newRow.insertCell(j);
+                //         cell.innerHTML = '<input type="text" value="' + values[j][i] + '">';
+                //         if (j + 1 === data.table.length) {
+                //             var cell = newRow.insertCell(data.table.length);
+                //             cell.innerHTML = '<a onclick="deleteRow(this)" class="btn-floating btn-small waves-effect waves-light red"><i class="material-icons">delete</i></a>'; 
+                //         }
+                //     }
+                // }
+
+                
                 for (var i = 0; i < count; i++) {
                     var newRow = tbody.insertRow(i);
                     for (var j = 0; j < data.table.length; j++) {
                         var cell = newRow.insertCell(j);
-                        cell.innerHTML = '<input type="text" value="' + values[j][i] + '">';
+                        var textarea = document.createElement('textarea');
+                        textarea.value = values[j][i];
+                        cell.appendChild(textarea);
                         if (j + 1 === data.table.length) {
                             var cell = newRow.insertCell(data.table.length);
                             cell.innerHTML = '<a onclick="deleteRow(this)" class="btn-floating btn-small waves-effect waves-light red"><i class="material-icons">delete</i></a>'; 
@@ -340,6 +387,18 @@
             function deleteRow(btn) {
                 var row = btn.parentNode.parentNode;
                 row.parentNode.removeChild(row);
+            }
+
+            function closeInfoPopup() {
+                const infoText = document.getElementById("info-text").innerHTML = "";
+                const info = document.getElementById("info-popup-wrapper");
+                info.style.display = "none";
+            }
+
+            function showInfoPopup(text) {
+                const infoText = document.getElementById("info-text").innerHTML = text;
+                const info = document.getElementById("info-popup-wrapper");
+                info.style.display = "flex";
             }
 
             function closeAlertPopup() {
@@ -556,6 +615,36 @@
                 });
             }
 
+            function loadInstructionForCurrentTemplate() {
+                const currentUrl = window.location.href;
+                const url = currentUrl + 'instruction';
+
+                const token = loadToken();
+                if (!token) { return; }
+
+                const selectValue = document.getElementById("templates-list").value;
+
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    },
+                    data: { template: selectValue },
+                    success: function(response) {
+                        if (response.result) {
+                            showInfoPopup(response.result);
+                        } else {
+                            showInfoPopup("Инструкция не найдена. Добавьте инструкцию, через настройки");
+                        }
+                    },
+                    error: function(xhr, textStatus, errorThrown) {
+                        showInfoPopup("Инструкция не найдена. Добавьте инструкцию, через настройки");
+                    }
+                });
+
+            }
+
             function saveSetting(obj) {
                 const currentUrl = window.location.href;
                 const url = currentUrl + 'new_setting';
@@ -742,7 +831,7 @@
                 position: fixed;
                 height: 100%;
                 max-width: 0;
-                width: 25%;
+                width: 30%;
                 background: aliceblue;
                 border-right: 1px solid;
                 overflow: hidden;
@@ -843,6 +932,18 @@
                 z-index: 15;
             }
 
+            #info-popup-wrapper {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                align-items: center;
+                justify-content: center;
+                display: none;
+                z-index: 15;
+            }
+
             #settings-popup-wrapper {
                 position: fixed;
                 top: 0;
@@ -924,16 +1025,22 @@
                 padding-top: 10px;
             }
 
-            td input {
+            td textarea {
                 min-width: 15%;
                 width: fit-content;
                 color: white;
+                border: 1px solid #9e9e9e;
             }
 
-            th input {
+            th textarea {
                 min-width: 15%;
                 width: fit-content;
                 color: white;
+                border: 1px solid #9e9e9e;
+            }
+
+            th {
+                padding: 5px 5px;
             }
 
             tr {
@@ -941,13 +1048,14 @@
             }
 
             td {
-                border-right: 1px solid #9e9e9e;
+                padding: 0 5px;
             }
 
-            /* thead {
-                background: black;
-                color: white;
-            } */
+            thead tr th textarea {
+                background-color: white;
+                color: #26a69a;
+                max-height: 25px;
+            }
 
             caption {
                 font-weight: 600;
