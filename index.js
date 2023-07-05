@@ -188,8 +188,8 @@ app.post('/python', multer_upload_excel.array('files'), (req, res) => {
     filesList.push(file.filename);
   });
 
-  const script = `python3 ${directoryTemplates}/${template} ` + `${names}`;
-
+  const script = `python ${directoryTemplates}/${template} ` + `${names}`;
+  console.log(script)
   // Выполняем скрипт Python с передачей имени файла в качестве аргумента
   exec(script, (error, stdout, stderr) => {
     if (error) {
