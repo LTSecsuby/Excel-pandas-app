@@ -109,7 +109,11 @@ def run_script(file_name):
         Sheet3['Общий итог'] = sum_column
 
         percentage_column = (Sheet3['нет'] / Sheet3['Общий итог']) * 100
-        Sheet3['Процент %'] = percentage_column
+        Sheet3['Процент %'] = percentage_column.round(2)
+
+        Sheet3['да'] = Sheet3['да'].apply(lambda x: round(x)).astype(int)
+        Sheet3['нет'] = Sheet3['нет'].apply(lambda x: round(x)).astype(int)
+        Sheet3['Общий итог'] = Sheet3['Общий итог'].apply(lambda x: round(x)).astype(int)
 
         output_file_excel = createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
         output_file_html = os.path.splitext(output_file_excel)[0] + '.html'

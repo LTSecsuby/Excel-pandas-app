@@ -79,6 +79,8 @@ def run_script(file_name):
 
         Sheet2['Торговый документ подрядчик'] = None
 
+        Sheet3 = pd.DataFrame()
+
         # values_list = Sheet2['Торговый документ'].tolist()
         # Sheet1 = Sheet1[~Sheet1['Наименование завода'].isin(values_list)]
 
@@ -91,6 +93,7 @@ def run_script(file_name):
         with pd.ExcelWriter(output_file_excel) as writer:
             Sheet1.to_excel(writer, sheet_name="Sheet1", index=False)
             Sheet2.to_excel(writer, sheet_name="Sheet2", index=False)
+            Sheet3.to_excel(writer, sheet_name="Sheet3", index=False)
 
         Sheet1.to_html(output_file_html, index=False)
 

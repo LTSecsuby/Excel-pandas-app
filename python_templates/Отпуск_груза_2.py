@@ -33,7 +33,15 @@ def run_script(file_name):
     Sheet2 = pd.read_excel(excel_file, sheet_name='Sheet2', engine='openpyxl')
     Sheet3 = pd.DataFrame()
 
-    docs = Sheet2['Торговый документ подрядчик'].tolist()
+    if not Sheet2['Торговый документ подрядчик'].isnull().values.all():
+        docs = Sheet2['Торговый документ подрядчик'].dropna().tolist()
+    else:
+        contractors_table = pd.read_excel(excel_file, sheet_name='Sheet3', engine='openpyxl')
+        contractors_table = contractors_table.drop_duplicates(subset='Торговый документ')
+        filtered_rows = contractors_table.loc[contractors_table['Доставка подрядчиком'] == 'ИСТИННО']
+        docs = filtered_rows['Торговый документ'].dropna().tolist()
+
+    Sheet2['Торговый документ подрядчик'] = pd.Series(docs)
 
     Sheet1['Доставка подрядчиком'] = Sheet1['Документ сбыта'].apply(lambda x: 'Доставка подрядчиком' if x in docs else None)
 
@@ -68,7 +76,11 @@ def run_script(file_name):
     Sheet4['Общий итог'] = sum_column
 
     percentage_column = (Sheet4['нет'] / Sheet4['Общий итог']) * 100
-    Sheet4['Процент %'] = percentage_column
+    Sheet4['Процент %'] = percentage_column.round(2)
+
+    Sheet4['да'] = Sheet4['да'].apply(lambda x: round(x)).astype(int)
+    Sheet4['нет'] = Sheet4['нет'].apply(lambda x: round(x)).astype(int)
+    Sheet4['Общий итог'] = Sheet4['Общий итог'].apply(lambda x: round(x)).astype(int)
 
     # Sheet3.columns = [' '.join(col).strip() for col in Sheet3.columns.values]
     # Sheet3 = Sheet3.reset_index()
