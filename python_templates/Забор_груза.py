@@ -39,7 +39,7 @@ def run_script(file_name):
 
     Sheet1 = Sheet1.dropna(subset=['Документ сбыта'])
 
-    Sheet1 = Sheet1.sort_values(by='Фактическая дата')
+    Sheet1 = Sheet1.sort_values(by='Фактическая дата', kind="mergesort")
 
     Sheet1 = Sheet1.drop_duplicates(subset='Документ сбыта')
     

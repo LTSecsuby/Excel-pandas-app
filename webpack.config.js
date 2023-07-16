@@ -7,6 +7,7 @@ const savedFiles = path.resolve(__dirname, 'saved_files');
 const savedSettingsFiles = path.resolve(__dirname, 'saved_settings_files');
 const utils = path.resolve(__dirname, 'utils');
 const indexHtml = path.resolve(__dirname, 'index.html');
+const authHtml = path.resolve(__dirname, 'auth.html');
 const env = path.resolve(__dirname, '.env');
 
 module.exports = {
@@ -69,6 +70,10 @@ module.exports = {
           {
             from: utils,
             to: 'utils',
+          },
+          {
+            from: authHtml,
+            to: '.'
           },
           {
             from: indexHtml,
