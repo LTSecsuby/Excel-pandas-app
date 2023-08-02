@@ -9,6 +9,7 @@ import utils
 
 import json
 import openpyxl
+import xlsxwriter
 import pandas as pd
 import numpy as np
 from dotenv import load_dotenv
