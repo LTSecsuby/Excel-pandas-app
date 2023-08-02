@@ -9,6 +9,7 @@ import utils
 
 import json
 import openpyxl
+import xlsxwriter
 import pandas as pd
 import numpy as np
 from dotenv import load_dotenv
@@ -57,8 +58,8 @@ def run_script(file_name):
     values_to_add_div = []
     with open(json_file, encoding="utf-8") as f:
         load_json = json.load(f)
-        values_to_add_rp = load_json['table'][0]['values']
-        values_to_add_div = load_json['table'][1]['values']
+        values_to_add_rp = load_json['table'][2]['values']
+        values_to_add_div = load_json['table'][3]['values']
         items = dict(zip(values_to_add_rp, values_to_add_div))
         Sheet1['Дивизион'] = Sheet1.apply(check_div, axis=1, items_list=items)
         Sheet1 = Sheet1.loc[Sheet1['Дивизион'] != 'Ритейл']
@@ -93,13 +94,70 @@ def run_script(file_name):
 
         Sheet2 = Sheet2.reset_index()
         
-        Sheet3 = utils.add_total_by_field(Sheet2, 'Дивизион', ['да', 'нет'])
+        # Sheet3 = utils.add_total_by_field(Sheet2, 'Наименование завода', 'Дивизион', ['да', 'нет'])
+
+        Sheet3 = pd.DataFrame(columns=Sheet2.columns)
+        new_rows = []
+
+        previous_division = Sheet2.iloc[0]['Дивизион']
+
+        division_list = []
+        division_list.append(previous_division)
+
+        last = None
+        previous_sum1 = 0
+        previous_sum2 = 0
+
+        for index, row in Sheet2.iterrows():
+            current_division = row['Дивизион']
+            last = row['Дивизион']
+
+            if current_division != previous_division:
+                new_row = {'Дивизион': None, 
+                        'Наименование завода': previous_division, 
+                        'да': previous_sum1,
+                        'нет': previous_sum2 }
+                new_rows.append(new_row)
+                division_list.append(current_division)
+                
+                previous_division = current_division
+                previous_sum1 = 0
+                previous_sum2 = 0
+                previous_sum1 += int(row['да'])
+                previous_sum2 += int(row['нет'])
+            else:
+                previous_sum1 += int(row['да'])
+                previous_sum2 += int(row['нет'])
+
+        last_row_dict = {'Дивизион': None, 
+                    'Наименование завода': last, 
+                    'да': previous_sum1,
+                    'нет': previous_sum2 }
+        new_rows.append(last_row_dict)
+        division_list.append(last)
+
+        new_rows_index = 0
+
+        Sheet3.loc[len(Sheet3)] = new_rows[new_rows_index]
+        new_rows_index = new_rows_index + 1
+        previous_division = Sheet2.iloc[0]['Дивизион']
+
+        for index, row in Sheet2.iterrows():
+            current_division = row['Дивизион']
+
+            if current_division != previous_division:
+                Sheet3.loc[len(Sheet3)] = new_rows[new_rows_index]
+                previous_division = current_division
+                new_rows_index = new_rows_index + 1
+                Sheet3.loc[len(Sheet3)] = row
+            else:
+                Sheet3.loc[len(Sheet3)] = row
 
         total_fact = Sheet2['да'].sum()
         total_cost = Sheet2['нет'].sum()
         total_count = total_fact + total_cost
-        total_row = pd.DataFrame({'Наименование завода': [''],
-                                'Дивизион': ['Общий итог'],
+        total_row = pd.DataFrame({'Наименование завода': ['Общий итог'],
+                                'Дивизион': [''],
                                 'да': [total_fact],
                                 'нет': [total_cost],
                                 'Общий итог': [total_count]})
@@ -108,19 +166,40 @@ def run_script(file_name):
         sum_column = Sheet3['да'] + Sheet3['нет']
         Sheet3['Общий итог'] = sum_column
 
-        percentage_column = (Sheet3['нет'] / Sheet3['Общий итог']) * 100
-        Sheet3['Процент %'] = percentage_column.round(2)
+        percentage_column = (Sheet3['нет'] / Sheet3['Общий итог'])
+        Sheet3['Процент %'] = percentage_column.round(4)
 
         Sheet3['да'] = Sheet3['да'].apply(lambda x: round(x)).astype(int)
         Sheet3['нет'] = Sheet3['нет'].apply(lambda x: round(x)).astype(int)
         Sheet3['Общий итог'] = Sheet3['Общий итог'].apply(lambda x: round(x)).astype(int)
 
+        division_list.append('Общий итог')
+
+        Sheet3 = Sheet3.drop(['Дивизион'], axis=1)
+
         output_file_excel = createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
         output_file_html = os.path.splitext(output_file_excel)[0] + '.html'
 
-        with pd.ExcelWriter(output_file_excel) as writer:
+        with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
+            book = writer.book
+            percent_format = book.add_format({'num_format': '0.00%'})
+            bold_format = book.add_format({'bold': True})
+
             Sheet1.to_excel(writer, sheet_name="Sheet1", index=False)
             Sheet3.to_excel(writer, sheet_name="Sheet2", index=False)
+            worksheet = writer.sheets["Sheet2"]
+
+            worksheet.set_column('E:E', 18, percent_format)
+            worksheet.set_column('A:A', 28)
+            worksheet.set_column('B:D', 18)
+
+            column_values = Sheet3['Наименование завода'].values.tolist()
+
+            for row_num, value in enumerate(column_values):
+                if value in division_list:
+                    worksheet.write(row_num + 1, 0, value, bold_format)
+                else:
+                    worksheet.write(row_num + 1, 0, value)
 
         Sheet3.to_html(output_file_html, index=False)
 

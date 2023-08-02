@@ -46,8 +46,8 @@ def run_script(file_name):
     values_to_add_div = []
     with open(json_file, encoding="utf-8") as f:
         load_json = json.load(f)
-        values_to_add_rp = load_json['table'][0]['values']
-        values_to_add_div = load_json['table'][1]['values']
+        values_to_add_rp = load_json['table'][2]['values']
+        values_to_add_div = load_json['table'][3]['values']
         items = dict(zip(values_to_add_rp, values_to_add_div))
         Sheet1['Дивизион'] = Sheet1.apply(check_div, axis=1, items_list=items)
         Sheet1 = Sheet1.loc[Sheet1['Дивизион'] != 'Ритейл']
