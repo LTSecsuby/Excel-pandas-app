@@ -1,5 +1,14 @@
 import sys
 import os
+
+# для работы import utils нужно подтянуть пути проекта
+PROJECT_ROOT = os.path.abspath(os.path.join(
+                  os.path.dirname(__file__), 
+                  os.pardir)
+)
+sys.path.append(PROJECT_ROOT)
+import utils
+
 import json
 import openpyxl
 import xlsxwriter
@@ -9,24 +18,8 @@ from dotenv import load_dotenv
 load_dotenv()
 pd.options.mode.chained_assignment = None
 
-def createEnvPath(env_path, last = None):
-    if os.getenv('MODE') == 'production':
-        if last:
-            return os.path.join(os.getcwd(), 'dist', os.getenv(env_path), last)
-        return os.path.join(os.getcwd(), 'dist', os.getenv(env_path))
-    else:
-        if last:
-            return os.path.join(os.getcwd(), os.getenv(env_path), last)
-    return os.path.join(os.getcwd(), os.getenv(env_path))
-
-def check_div(row, items_list):
-    for key, value in items_list.items():
-        if row['Наименование завода'] == key:
-            return value
-    return 'нет значения'
-
 def run_script(file_name):
-    excel_file = createEnvPath('SAVED_FILES_PATH', file_name)
+    excel_file = utils.createEnvPath('SAVED_FILES_PATH', file_name)
     Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
     encoding = 'utf-8'
 
@@ -34,7 +27,7 @@ def run_script(file_name):
 
     Sheet1 = Sheet1.dropna(subset=['Документ сбыта'])
 
-    json_file = createEnvPath('SAVED_SETTINGS_FILES_PATH', 'удалить.json')
+    json_file = utils.createEnvPath('SAVED_SETTINGS_FILES_PATH', 'удалить.json')
     values_to_drop = []
     with open(json_file, encoding="utf-8") as f:
         load_json = json.load(f)
@@ -42,7 +35,7 @@ def run_script(file_name):
     Sheet1 = Sheet1[~Sheet1['Наименование завода'].isin(values_to_drop)]
 
     # divisions = pd.DataFrame()
-    json_file = createEnvPath('SAVED_SETTINGS_FILES_PATH', 'дивизионы.json')
+    json_file = utils.createEnvPath('SAVED_SETTINGS_FILES_PATH', 'дивизионы.json')
     values_to_add_rp = []
     values_to_add_div = []
     with open(json_file, encoding="utf-8") as f:
@@ -50,14 +43,16 @@ def run_script(file_name):
         values_to_add_rp = load_json['table'][2]['values']
         values_to_add_div = load_json['table'][3]['values']
         items = dict(zip(values_to_add_rp, values_to_add_div))
-        Sheet1['Дивизион'] = Sheet1.apply(check_div, axis=1, items_list=items)
+
+        Sheet1['Дивизион'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наименование завода', items_list=items, default_value='Пустой дивизион')
+
         Sheet1 = Sheet1.loc[Sheet1['Дивизион'] != 'Ритейл']
         # divisions['РП'] = values_to_add_rp
         # divisions['Дивизион'] = values_to_add_div
 
     unknowns = Sheet1.loc[Sheet1['Дивизион'] == 'нет значения', 'Наименование завода'].tolist()
     if len(unknowns) > 0:
-        error_json = createEnvPath('SAVED_ERRPR_PATH', 'unknowns_division')
+        error_json = utils.createEnvPath('SAVED_ERRPR_PATH', 'unknowns_division')
         output_file_json = os.path.splitext(error_json)[0] + '.json'
         error = pd.DataFrame()
         error['error'] = unknowns
@@ -85,10 +80,10 @@ def run_script(file_name):
         # values_list = Sheet2['Торговый документ'].tolist()
         # Sheet1 = Sheet1[~Sheet1['Наименование завода'].isin(values_list)]
 
-        # output_file = createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
+        # output_file = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
         # Sheet1.to_excel(output_file, index=False)
 
-        output_file_excel = createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
+        output_file_excel = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
         output_file_html = os.path.splitext(output_file_excel)[0] + '.html'
 
         with pd.ExcelWriter(output_file_excel) as writer:
@@ -120,7 +115,7 @@ if len(sys.argv) < 2:
     print(False)
 else:
     # sys.argv[1] - загрузим первый файл, если их несколько то нужно загружать их в цикле for arg in sys.argv[1:]: 
-    excel_file = createEnvPath('SAVED_FILES_PATH', sys.argv[1])
+    excel_file = utils.createEnvPath('SAVED_FILES_PATH', sys.argv[1])
     Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
 
     if 'Назв. вида поставки' in Sheet1.columns:

@@ -1,5 +1,7 @@
 import sys
 import os
+
+# для работы import utils нужно подтянуть пути проекта
 PROJECT_ROOT = os.path.abspath(os.path.join(
                   os.path.dirname(__file__), 
                   os.pardir)
@@ -16,18 +18,8 @@ from dotenv import load_dotenv
 load_dotenv()
 pd.options.mode.chained_assignment = None
 
-def createEnvPath(env_path, last = None):
-    if os.getenv('MODE') == 'production':
-        if last:
-            return os.path.join(os.getcwd(), 'dist', os.getenv(env_path), last)
-        return os.path.join(os.getcwd(), 'dist', os.getenv(env_path))
-    else:
-        if last:
-            return os.path.join(os.getcwd(), os.getenv(env_path), last)
-    return os.path.join(os.getcwd(), os.getenv(env_path))
-
 def run_script(file_name):
-    excel_file = createEnvPath('SAVED_FILES_PATH', file_name)
+    excel_file = utils.createEnvPath('SAVED_FILES_PATH', file_name)
     encoding = 'utf-8'
 
     Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
@@ -148,7 +140,7 @@ def run_script(file_name):
     # Sheet3.columns = [' '.join(col).strip() for col in Sheet3.columns.values]
     # Sheet3 = Sheet3.reset_index()
 
-    output_file_excel = createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
+    output_file_excel = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
     output_file_html = os.path.splitext(output_file_excel)[0] + '.html'
 
     with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
@@ -182,7 +174,7 @@ if len(sys.argv) < 2:
     print(False)
 else:
     # sys.argv[1] - загрузим первый файл, если их несколько то нужно загружать их в цикле for arg in sys.argv[1:]: 
-    excel_file = createEnvPath('SAVED_FILES_PATH', sys.argv[1])
+    excel_file = utils.createEnvPath('SAVED_FILES_PATH', sys.argv[1])
     Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
 
     if 'Назв. вида поставки' in Sheet1.columns:
