@@ -13,3 +13,11 @@ def check_value_in_list_and_set_value(row, row_name, items_list, default_value=N
         return default_value
     else:
         return 'нет значения'
+
+def check_value_in_row_and_set_value(row, row_name_1, row_name_2, row_value_name, default_value=None):
+    if row[row_name_1] in row[row_name_2]:
+        return row[row_value_name]
+    if default_value:
+        return default_value
+    else:
+        return 'нет значения'        

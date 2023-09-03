@@ -122,6 +122,8 @@ def run_script(file_name):
     # 1)	если  ЭтФактДатП1 и Эт:ФактДатР -пусто( машина не заезжала в рп, исключить из отчета)-удалить строки
     Sheet1 = Sheet1.dropna(subset=['Эт:ФктДатП_1', 'Эт:ФктДатР'], how='all')
 
+    Sheet1['Эт:ФктДатП_1'] = Sheet1['Эт:ФктДатП_1'].fillna(0)
+
     Sheet1['Эт:ПлнВрПр'] = pd.to_timedelta(Sheet1['Эт:ПлнВрПр'].astype(str))
     Sheet1['Эт:ФктВрПр'] = pd.to_timedelta(Sheet1['Эт:ФктВрПр'].astype(str))
 
@@ -163,20 +165,26 @@ def run_script(file_name):
 
         Sheet1['див'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='РП разгрузки ТС', items_list=items_div, default_value='Пустой див')
 
-    # проверка есть ли все дивизионы по колонке 'Назн.:Звд', check_value_in_list_and_set_value устанавливает 'нет значения' в 'див' если не нашел
-    unknowns = []
-    for index, row in Sheet1.iterrows():
-        if row['див'] == 'нет значения':
-            unknowns.append(row['Назн.:Звд'] + ', ')
-
-    if len(unknowns) > 0:
+    # проверка есть ли все дивизионы по колонке 'Назн.:Звд', check_value_in_list_and_set_value устанавливает 'нет значения' в 'див' и в 'РП разгрузки ТС'
+    # если не нашел то кидаем исключение print('unknowns_division') и сохраняем не найденные в output_file_json, исключение будет обработано сервером
+    unknowns_div = Sheet1.loc[Sheet1['див'] == 'нет значения', 'Назн.:Звд'].tolist()
+    unknowns_rp = Sheet1.loc[Sheet1['РП разгрузки ТС'] == 'нет значения', 'Назн.:Звд'].tolist()
+    if len(unknowns_div) > 0:
         error_json = utils.createEnvPath('SAVED_ERRPR_PATH', 'unknowns_division')
         output_file_json = os.path.splitext(error_json)[0] + '.json'
         error = pd.DataFrame()
-        error['error'] = unknowns
+        error['error'] = unknowns_div
         with open(output_file_json, 'w', encoding='utf-8') as file:
             error.to_json(output_file_json, force_ascii=False)
         print('unknowns_division')
+    elif len(unknowns_rp) > 0:
+        error_json = utils.createEnvPath('SAVED_ERRPR_PATH', 'unknowns_division')
+        output_file_json = os.path.splitext(error_json)[0] + '.json'
+        error = pd.DataFrame()
+        error['error'] = unknowns_rp
+        with open(output_file_json, 'w', encoding='utf-8') as file:
+            error.to_json(output_file_json, force_ascii=False)
+        print('unknowns_division')    
     else:
         Sheet1['Категория склада'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='РП разгрузки ТС', items_list=items_stock, default_value='Пустая категория')
 
@@ -216,9 +224,11 @@ def run_script(file_name):
 
         Sheet2 = pd.DataFrame()
 
+        Sheet2['Дата/время размещения фотографий/документов'] = None
         Sheet2['Номер документа-основания= Ключ объекта'] = None
-
         Sheet2['Завод пользователя'] = None
+        Sheet2['Наименован завода польз'] = None
+        Sheet2['ввв'] = None
 
         output_file = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
         output_file_html = os.path.splitext(output_file)[0] + '.html'
@@ -241,9 +251,15 @@ def run_script(file_name):
             worksheet2 = writer.sheets["zimg"]
 
             worksheet2.set_column('A:A', 30, wrap_format)
-            worksheet2.set_column('B:B', 18, wrap_format)
-            worksheet2.write(0, 0, "Номер документа-основания= Ключ объекта", wrap_format)
-            worksheet2.write(0, 1, "Завод пользователя", wrap_format)
+            worksheet2.set_column('B:B', 30, wrap_format)
+            worksheet2.set_column('C:C', 18, wrap_format)
+            worksheet2.set_column('D:D', 18, wrap_format)
+            worksheet2.set_column('E:E', 30, wrap_format)
+            worksheet2.write(0, 0, "Дата/время размещения фотографий/документов", wrap_format)
+            worksheet2.write(0, 1, "Номер документа-основания= Ключ объекта", wrap_format)
+            worksheet2.write(0, 2, "Завод пользователя", wrap_format)
+            worksheet2.write(0, 3, "Наименован завода польз", wrap_format)
+            worksheet2.write(0, 4, "ввв", wrap_format)
 
         Sheet1.to_html(output_file_html, index=False)
         print(True)

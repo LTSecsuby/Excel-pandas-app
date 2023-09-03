@@ -70,100 +70,15 @@ def run_script(file_name):
         Sheet1['Отклонение'] = Sheet1['Отклонение'].fillna(value='нет данных')
         Sheet1.loc[Sheet1['Отклонение'] == 'нет данных', 'Нарушение'] = 'да'
 
-        Sheet2 = pd.DataFrame()
-        Sheet2 = pd.pivot_table(Sheet1,
-                index=['Дивизион', 'Наименование завода'],
-                columns='Нарушение',
-                values='Назв. вида поставки',
-                aggfunc='count')
-
-        Sheet2['да'] = Sheet2['да'].fillna(0)
-        Sheet2['нет'] = Sheet2['нет'].fillna(0)
-
-        Sheet2 = Sheet2.reset_index()
-        
-        # Sheet3 = utils.add_total_by_field(Sheet2, 'Наименование завода', 'Дивизион', ['да', 'нет'])
-
-        Sheet3 = pd.DataFrame(columns=Sheet2.columns)
-        new_rows = []
-
-        previous_division = Sheet2.iloc[0]['Дивизион']
-
-        division_list = []
-        division_list.append(previous_division)
-
-        last = None
-        previous_sum1 = 0
-        previous_sum2 = 0
-
-        for index, row in Sheet2.iterrows():
-            current_division = row['Дивизион']
-            last = row['Дивизион']
-
-            if current_division != previous_division:
-                new_row = {'Дивизион': None, 
-                        'Наименование завода': previous_division, 
-                        'да': previous_sum1,
-                        'нет': previous_sum2 }
-                new_rows.append(new_row)
-                division_list.append(current_division)
-                
-                previous_division = current_division
-                previous_sum1 = 0
-                previous_sum2 = 0
-                previous_sum1 += int(row['да'])
-                previous_sum2 += int(row['нет'])
-            else:
-                previous_sum1 += int(row['да'])
-                previous_sum2 += int(row['нет'])
-
-        last_row_dict = {'Дивизион': None, 
-                    'Наименование завода': last, 
-                    'да': previous_sum1,
-                    'нет': previous_sum2 }
-        new_rows.append(last_row_dict)
-        division_list.append(last)
-
-        new_rows_index = 0
-
-        Sheet3.loc[len(Sheet3)] = new_rows[new_rows_index]
-        new_rows_index = new_rows_index + 1
-        previous_division = Sheet2.iloc[0]['Дивизион']
-
-        for index, row in Sheet2.iterrows():
-            current_division = row['Дивизион']
-
-            if current_division != previous_division:
-                Sheet3.loc[len(Sheet3)] = new_rows[new_rows_index]
-                previous_division = current_division
-                new_rows_index = new_rows_index + 1
-                Sheet3.loc[len(Sheet3)] = row
-            else:
-                Sheet3.loc[len(Sheet3)] = row
-
-        total_fact = Sheet2['да'].sum()
-        total_cost = Sheet2['нет'].sum()
-        total_count = total_fact + total_cost
-        total_row = pd.DataFrame({'Наименование завода': ['Общий итог'],
-                                'Дивизион': [''],
-                                'да': [total_fact],
-                                'нет': [total_cost],
-                                'Общий итог': [total_count]})
-        Sheet3 = pd.concat([Sheet3, total_row])
-
-        sum_column = Sheet3['да'] + Sheet3['нет']
-        Sheet3['Общий итог'] = sum_column
-
-        percentage_column = (Sheet3['нет'] / Sheet3['Общий итог'])
-        Sheet3['Процент %'] = percentage_column.round(4)
-
-        Sheet3['да'] = Sheet3['да'].apply(lambda x: round(x)).astype(int)
-        Sheet3['нет'] = Sheet3['нет'].apply(lambda x: round(x)).astype(int)
-        Sheet3['Общий итог'] = Sheet3['Общий итог'].apply(lambda x: round(x)).astype(int)
-
-        division_list.append('Общий итог')
-
-        Sheet3 = Sheet3.drop(['Дивизион'], axis=1)
+        # utils.create_pivot_table_and_get_div_list - создать сводную типа нарушение да нет процент итого и возвращает ее и список дивизионов в итоговой таблице
+        # data_table - исходная таблица с данными
+        # violation_col - столбц с данными по нарушениями
+        # div_col_name - название столбца с дивизионами
+        # rp_col_name - название столбца с заводами
+        # values_col_name - название столбца значений
+        result = utils.create_pivot_table_and_get_div_list(Sheet1, 'Нарушение', 'Дивизион', 'Наименование завода', 'Назв. вида поставки')
+        Sheet3 = result['table']
+        division_list = result['div']
 
         output_file_excel = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
         output_file_html = os.path.splitext(output_file_excel)[0] + '.html'
