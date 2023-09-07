@@ -28,8 +28,7 @@ if len(sys.argv) < 2:
     print(False)
 else:
     # sys.argv[1] - загрузим первый файл, если их несколько то нужно загружать их в цикле for arg in sys.argv[1:]:
-    res_dict = {}
-    res2_dict = {}
+    res_list = []
     num_list = 1
     for arg in sys.argv[1:]:
         # нулевой не трогаем
@@ -44,23 +43,24 @@ else:
                 current_sheet['ДатаВремя'] = (pd.to_datetime(current_sheet['Дата размещения фотографий/документов']) + current_sheet['Время размещения фотографий/документов'])
                 for index, row in current_sheet.iterrows():
                     key = row['Ключ объекта']
-                    value1 = row['Завод пользователя']
                     if pd.isna(key):
                         continue
-                    if isinstance(value1, float):
-                        value1 = int(round(value1))
-                        value1 = str(value1)
-                        if len(value1) < 4:
-                            value1 = '0' + value1
-                    res_dict[key] = value1
-                    value2 = row['ДатаВремя']
-                    res2_dict[key] = value2
+                    rp = row['Завод пользователя']
+                    if isinstance(rp, float):
+                        rp = int(round(rp))
+                        rp = str(rp)
+                        if len(rp) < 4:
+                            rp = '0' + rp
+                    time = row['ДатаВремя']
+                    object = {'key': key, 'rp': rp, 'time': time}
+                    res_list.append(object)
 
     Sheet1 = pd.DataFrame(columns=['Дата/время размещения фотографий/документов','Номер документа-основания= Ключ объекта', 'Завод пользователя'])
 
-    Sheet1['Дата/время размещения фотографий/документов'] = list(res2_dict.values())
-    Sheet1['Номер документа-основания= Ключ объекта'] = list(res_dict.keys())
-    Sheet1['Завод пользователя'] = list(res_dict.values())
+    for i, object in enumerate(res_list):
+        Sheet1.at[i, 'Дата/время размещения фотографий/документов'] = object['time']
+        Sheet1.at[i, 'Номер документа-основания= Ключ объекта'] = object['key']
+        Sheet1.at[i, 'Завод пользователя'] = object['rp']
 
     Sheet1['Номер документа-основания= Ключ объекта'] = Sheet1['Номер документа-основания= Ключ объекта'].astype(float)
 
