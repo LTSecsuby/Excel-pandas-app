@@ -50,6 +50,8 @@ else:
                     if isinstance(value1, float):
                         value1 = int(round(value1))
                         value1 = str(value1)
+                        if len(value1) < 4:
+                            value1 = '0' + value1
                     res_dict[key] = value1
                     value2 = row['ДатаВремя']
                     res2_dict[key] = value2
