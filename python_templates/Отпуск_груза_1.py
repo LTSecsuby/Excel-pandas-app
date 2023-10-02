@@ -18,37 +18,22 @@ from dotenv import load_dotenv
 load_dotenv()
 pd.options.mode.chained_assignment = None
 
-def run_script(file_name):
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', file_name)
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
-    encoding = 'utf-8'
+def run_script(current_data, output_file_excel, output_file_html):
+    Sheet1 = current_data
 
     Sheet1 = Sheet1.drop_duplicates()
 
     Sheet1 = Sheet1.dropna(subset=['Документ сбыта'])
 
-    json_file = utils.createEnvPath('SAVED_SETTINGS_FILES_PATH', 'удалить.json')
-    values_to_drop = []
-    with open(json_file, encoding="utf-8") as f:
-        load_json = json.load(f)
-        values_to_drop = load_json['table'][0]['values']
+    values_to_drop = utils.load_settings_table_column_values('удалить.json', 'Доп склад')
     Sheet1 = Sheet1[~Sheet1['Наименование завода'].isin(values_to_drop)]
 
-    # divisions = pd.DataFrame()
-    json_file = utils.createEnvPath('SAVED_SETTINGS_FILES_PATH', 'дивизионы.json')
-    values_to_add_rp = []
-    values_to_add_div = []
-    with open(json_file, encoding="utf-8") as f:
-        load_json = json.load(f)
-        values_to_add_rp = load_json['table'][2]['values']
-        values_to_add_div = load_json['table'][3]['values']
-        items = dict(zip(values_to_add_rp, values_to_add_div))
+    values_to_add_rp = utils.load_settings_table_column_values('дивизионы.json', 'РП')
+    values_to_add_div = utils.load_settings_table_column_values('дивизионы.json', 'Дивизион')
+    items = dict(zip(values_to_add_rp, values_to_add_div))
+    Sheet1['Дивизион'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наименование завода', items_list=items)
 
-        Sheet1['Дивизион'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наименование завода', items_list=items, default_value='Пустой дивизион')
-
-        Sheet1 = Sheet1.loc[Sheet1['Дивизион'] != 'Ритейл']
-        # divisions['РП'] = values_to_add_rp
-        # divisions['Дивизион'] = values_to_add_div
+    Sheet1 = Sheet1.loc[Sheet1['Дивизион'] != 'Ритейл']
 
     unknowns = Sheet1.loc[Sheet1['Дивизион'] == 'нет значения', 'Наименование завода'].tolist()
     if len(unknowns) > 0:
@@ -80,12 +65,6 @@ def run_script(file_name):
         # values_list = Sheet2['Торговый документ'].tolist()
         # Sheet1 = Sheet1[~Sheet1['Наименование завода'].isin(values_list)]
 
-        # output_file = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
-        # Sheet1.to_excel(output_file, index=False)
-
-        output_file_excel = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
-        output_file_html = os.path.splitext(output_file_excel)[0] + '.html'
-
         with pd.ExcelWriter(output_file_excel) as writer:
             Sheet1.to_excel(writer, sheet_name="Sheet1", index=False)
             Sheet2.to_excel(writer, sheet_name="Sheet2", index=False)
@@ -110,18 +89,22 @@ def run_script(file_name):
 
         print(True)
 
-if len(sys.argv) < 2:
-    # нет файлов
-    print(False)
-else:
-    # sys.argv[1] - загрузим первый файл, если их несколько то нужно загружать их в цикле for arg in sys.argv[1:]: 
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', sys.argv[1])
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
+load_obj = utils.load_file_obj(sys.argv[1:])
+output_file_excel = load_obj["output_file_excel"]
+output_file_html = load_obj["output_file_html"]
+files = load_obj["files"]
 
-    if 'Назв. вида поставки' in Sheet1.columns:
-        if Sheet1['Назв. вида поставки'].iloc[0] == 'Отпуск груза':
-            run_script(sys.argv[1])
-        else:
-            print(False)
-    else:
-        print(False)
+isExistData = False
+current_data = None
+
+for file in files:
+    for sheet_name, sheet in file.items():
+        if 'Назв. вида поставки' in sheet.columns:
+            if sheet['Назв. вида поставки'].iloc[0] == 'Отпуск груза':
+                isExistData = True
+                current_data = sheet
+
+if isExistData:
+    run_script(current_data, output_file_excel, output_file_html)
+else:
+    print(False)

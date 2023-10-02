@@ -346,5 +346,13 @@ app.get('/download_template', function(req, res){
   });
 });
 
+app.get('/videos', (req, res) => {
+  const videos = [
+    { name: 'Обзорное видео', url: 'https://youtu.be/bz2SzRM92Pw' },
+    { name: 'Дефолтный шаблон', url: 'https://youtu.be/UyICimz1LDk'},
+  ]
+  res.status(200).json(videos);
+});
+
 app.listen(process.env.PORT, () => console.log('Server listening on port 3000'));
 

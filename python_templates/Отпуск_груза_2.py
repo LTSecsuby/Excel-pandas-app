@@ -18,12 +18,9 @@ from dotenv import load_dotenv
 load_dotenv()
 pd.options.mode.chained_assignment = None
 
-def run_script(file_name):
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', file_name)
-    encoding = 'utf-8'
-
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
-    Sheet2 = pd.read_excel(excel_file, sheet_name='Sheet2', engine='openpyxl')
+def run_script(table_data, contractor_data, output_file_excel, output_file_html):
+    Sheet1 = table_data
+    Sheet2 = contractor_data
 
     if not Sheet2['Торговый документ подрядчик'].isnull().values.all():
         docs = Sheet2['Торговый документ подрядчик'].dropna().tolist()
@@ -54,9 +51,6 @@ def run_script(file_name):
     # Sheet3.columns = [' '.join(col).strip() for col in Sheet3.columns.values]
     # Sheet3 = Sheet3.reset_index()
 
-    output_file_excel = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
-    output_file_html = os.path.splitext(output_file_excel)[0] + '.html'
-
     with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
         book = writer.book
         percent_format = book.add_format({'num_format': '0.00%'})
@@ -83,18 +77,27 @@ def run_script(file_name):
 
     print(True)
 
-if len(sys.argv) < 2:
-    # нет файлов
-    print(False)
-else:
-    # sys.argv[1] - загрузим первый файл, если их несколько то нужно загружать их в цикле for arg in sys.argv[1:]: 
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', sys.argv[1])
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
+load_obj = utils.load_file_obj(sys.argv[1:])
+output_file_excel = load_obj["output_file_excel"]
+output_file_html = load_obj["output_file_html"]
+files = load_obj["files"]
 
-    if 'Назв. вида поставки' in Sheet1.columns:
-        if Sheet1['Назв. вида поставки'].iloc[0] == 'Отпуск груза':
-            run_script(sys.argv[1])
-        else:
-            print(False)
-    else:
-        print(False)
+table_data = None
+contractor_data = None
+isExistData = False
+isExistContractor = False
+
+for file in files:
+    for sheet_name, sheet in file.items():
+        if 'Назв. вида поставки' in sheet.columns:
+            if sheet['Назв. вида поставки'].iloc[0] == 'Отпуск груза':
+                isExistData = True
+                table_data = sheet
+        elif 'Торговый документ подрядчик' in sheet.columns:
+            isExistContractor = True
+            contractor_data = sheet
+
+if isExistData and isExistContractor:
+    run_script(table_data, contractor_data, output_file_excel, output_file_html)
+else:
+    print(False)

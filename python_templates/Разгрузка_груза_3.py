@@ -19,19 +19,15 @@ load_dotenv()
 pd.options.mode.chained_assignment = None
 
 
-def run_script(file_name):
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', file_name)
-
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Лист1', engine='openpyxl')
-    Sheet2 = pd.read_excel(excel_file, sheet_name='zimg', engine='openpyxl')
+def run_script(table_data, late_act_data, output_file_excel, output_file_html):
+    Sheet1 = table_data
+    Sheet2 = late_act_data
 
     Sheet1['акт'] = Sheet1['МЛ'].apply(lambda x: x if x in Sheet2['ввв'].values else 'Пустой акт')
 
     Sheet1.loc[Sheet1['акт'] != 'Пустой акт', 'Нарушение'] = 'нет'
 
-    output_file = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
-    output_file_html = os.path.splitext(output_file)[0] + '.html'
-    Sheet1.to_excel(output_file, index=False)
+    Sheet1.to_excel(output_file_excel, index=False)
 
     # utils.create_pivot_table_and_get_div_list - создать сводную типа нарушение/да/нет/%/Общий итог и возвращает ее и список дивизионов в итоговой таблице
     # data_table - исходная таблица с данными
@@ -54,9 +50,6 @@ def run_script(file_name):
     division_list2 = result['div']
 
     # сохраняем
-    output_file_excel = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
-    output_file_html = os.path.splitext(output_file_excel)[0] + '.html'
-
     with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
         book = writer.book
         percent_format = book.add_format({'num_format': '0.00%'})
@@ -103,16 +96,26 @@ def run_script(file_name):
 
     print(True)
 
-if len(sys.argv) < 2:
-    # нет файлов
-    print(False)
-else:
-    # sys.argv[1] - загрузим первый файл, если их несколько то нужно загружать их в цикле for arg in sys.argv[1:]: 
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', sys.argv[1])
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Лист1', engine='openpyxl')
-    Sheet2 = pd.read_excel(excel_file, sheet_name='zimg', engine='openpyxl')
+load_obj = utils.load_file_obj(sys.argv[1:])
+output_file_excel = load_obj["output_file_excel"]
+output_file_html = load_obj["output_file_html"]
+files = load_obj["files"]
 
-    if '№ транспортировки' in Sheet1.columns and 'ввв' in Sheet2.columns:
-        run_script(sys.argv[1])
-    else:
-        print(False)
+table_data = None
+late_act_data = None
+isExistData = False
+isExistLateAct = False
+
+for file in files:
+    for sheet_name, sheet in file.items():
+        if '№ транспортировки' in sheet.columns and 'Нарушение' in sheet.columns:
+            isExistData = True
+            table_data = sheet
+        elif 'ввв' in sheet.columns:
+            isExistLateAct = True
+            late_act_data = sheet
+
+if isExistData and isExistLateAct:
+    run_script(table_data, late_act_data, output_file_excel, output_file_html)
+else:
+    print(False)

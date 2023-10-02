@@ -107,10 +107,8 @@ def calculate_normative_time_period(value):
     else:
         return "4.Не завершена"
 
-def run_script(file_name):
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', file_name)
-
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Лист1', engine='openpyxl')
+def run_script(current_data, output_file_excel, output_file_html):
+    Sheet1 = current_data
 
     Sheet1 = Sheet1.loc[Sheet1['СрМакс%Заг'] != 0]
 
@@ -146,26 +144,17 @@ def run_script(file_name):
     Sheet1 = Sheet1[~Sheet1['Узел отправки'].str.contains('Нарьян-Мар')]
     Sheet1 = Sheet1[~Sheet1['Узел отправки'].str.contains('Москва-Щербинка')]
 
-    # divisions = pd.DataFrame()
-    json_file = utils.createEnvPath('SAVED_SETTINGS_FILES_PATH', 'дивизионы.json')
-    values_to_add_rp = []
-    values_to_add_div = []
-    values_to_add_stock = []
-    values_to_add_rp_num = []
-    with open(json_file, encoding="utf-8") as f:
-        load_json = json.load(f)    
-        values_to_add_stock = load_json['table'][0]['values']
-        values_to_add_rp_num = load_json['table'][1]['values']
-        values_to_add_rp = load_json['table'][2]['values']
-        values_to_add_div = load_json['table'][3]['values']
+    values_to_add_rp = utils.load_settings_table_column_values('дивизионы.json', 'РП')
+    values_to_add_div = utils.load_settings_table_column_values('дивизионы.json', 'Дивизион')
+    values_to_add_stock = utils.load_settings_table_column_values('дивизионы.json', 'Склад')
+    values_to_add_rp_num = utils.load_settings_table_column_values('дивизионы.json', 'Номер города')
+    items_num_rp = dict(zip(values_to_add_rp_num, values_to_add_rp))
+    items_div = dict(zip(values_to_add_rp, values_to_add_div))
+    items_stock = dict(zip(values_to_add_rp, values_to_add_stock))
 
-        items_num_rp = dict(zip(values_to_add_rp_num, values_to_add_rp))
-        items_div = dict(zip(values_to_add_rp, values_to_add_div))
-        items_stock = dict(zip(values_to_add_rp, values_to_add_stock))
+    Sheet1['РП разгрузки ТС'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Назн.:Звд', items_list=items_num_rp)
 
-        Sheet1['РП разгрузки ТС'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Назн.:Звд', items_list=items_num_rp, default_value='Пустой завод')
-
-        Sheet1['див'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='РП разгрузки ТС', items_list=items_div, default_value='Пустой див')
+    Sheet1['див'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='РП разгрузки ТС', items_list=items_div)
 
     # проверка есть ли все дивизионы по колонке 'Назн.:Звд', check_value_in_list_and_set_value устанавливает 'нет значения' в 'див' и в 'РП разгрузки ТС'
     # если не нашел то кидаем исключение print('unknowns_division') и сохраняем не найденные в output_file_json, исключение будет обработано сервером
@@ -232,11 +221,9 @@ def run_script(file_name):
         Sheet2['Наименован завода польз'] = None
         Sheet2['ввв'] = None
 
-        output_file = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
-        output_file_html = os.path.splitext(output_file)[0] + '.html'
-        Sheet1.to_excel(output_file, index=False)
+        Sheet1.to_excel(output_file_excel, index=False)
 
-        with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
+        with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
             book = writer.book
             time_format = book.add_format({'num_format': 'hh:mm:ss'})
             wrap_format = book.add_format({'bold': True})
@@ -266,15 +253,21 @@ def run_script(file_name):
         Sheet1.to_html(output_file_html, index=False)
         print(True)
 
-if len(sys.argv) < 2:
-    # нет файлов
-    print(False)
-else:
-    # sys.argv[1] - загрузим первый файл, если их несколько то нужно загружать их в цикле for arg in sys.argv[1:]: 
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', sys.argv[1])
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Лист1', engine='openpyxl')
+load_obj = utils.load_file_obj(sys.argv[1:])
+output_file_excel = load_obj["output_file_excel"]
+output_file_html = load_obj["output_file_html"]
+files = load_obj["files"]
 
-    if '№ транспортировки' in Sheet1.columns:
-        run_script(sys.argv[1])
-    else:
-        print(False)
+isExistData = False
+current_data = None
+
+for file in files:
+    for sheet_name, sheet in file.items():
+        if '№ транспортировки' in sheet.columns and 'СрМакс%Заг' in sheet.columns:
+            isExistData = True
+            current_data = sheet
+
+if isExistData:
+    run_script(current_data, output_file_excel, output_file_html)
+else:
+    print(False)

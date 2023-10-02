@@ -18,50 +18,26 @@ from dotenv import load_dotenv
 load_dotenv()
 pd.options.mode.chained_assignment = None
 
-def run_script(file_name):
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', file_name)
-
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
-    encoding = 'utf-8'
-
+def run_script(data, output_file_excel, output_file_html):
+    Sheet1 = data
     Sheet1 = Sheet1.dropna(subset=['Документ сбыта'])
 
     Sheet1 = Sheet1.sort_values(by='Фактическая дата', kind="mergesort")
 
     Sheet1 = Sheet1.drop_duplicates(subset='Документ сбыта')
-    
 
-    json_file = utils.createEnvPath('SAVED_SETTINGS_FILES_PATH', 'удалить.json')
-    values_to_drop = []
-    with open(json_file, encoding="utf-8") as f:
-        load_json = json.load(f)
-        values_to_drop = load_json['table'][0]['values']
+    values_to_drop = utils.load_settings_table_column_values('удалить.json', 'Доп склад')
     Sheet1 = Sheet1[~Sheet1['Наименование завода'].isin(values_to_drop)]
 
-    # divisions = pd.DataFrame()
-    json_file = utils.createEnvPath('SAVED_SETTINGS_FILES_PATH', 'дивизионы.json')
-    values_to_add_rp = []
-    values_to_add_div = []
-    with open(json_file, encoding="utf-8") as f:
-        load_json = json.load(f)
-        values_to_add_rp = load_json['table'][2]['values']
-        values_to_add_div = load_json['table'][3]['values']
-        items = dict(zip(values_to_add_rp, values_to_add_div))
+    values_to_add_rp = utils.load_settings_table_column_values('дивизионы.json', 'РП')
+    values_to_add_div = utils.load_settings_table_column_values('дивизионы.json', 'Дивизион')
+    items = dict(zip(values_to_add_rp, values_to_add_div))
 
-        Sheet1['Дивизион'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наименование завода', items_list=items, default_value='Пустой дивизион')
+    Sheet1['Дивизион'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наименование завода', items_list=items)
+    Sheet1 = Sheet1.loc[Sheet1['Дивизион'] != 'Ритейл']
 
-        Sheet1 = Sheet1.loc[Sheet1['Дивизион'] != 'Ритейл']
-        # divisions['РП'] = values_to_add_rp
-        # divisions['Дивизион'] = values_to_add_div
-
-    unknowns = Sheet1.loc[Sheet1['Дивизион'] == 'нет значения', 'Наименование завода'].tolist()
-    if len(unknowns) > 0:
-        error_json = utils.createEnvPath('SAVED_ERRPR_PATH', 'unknowns_division')
-        output_file_json = os.path.splitext(error_json)[0] + '.json'
-        error = pd.DataFrame()
-        error['error'] = unknowns
-        with open(output_file_json, 'w', encoding='utf-8') as file:
-            error.to_json(output_file_json, force_ascii=False)
+    error = utils.check_null_pointer_in_table_value(Sheet1, 'Дивизион', 'Наименование завода', 'нет значения')
+    if error:
         print('unknowns_division')
     else:
         Sheet1['Отклонение'] = Sheet1.apply(lambda x: x['Фактическая дата'] - x['Плановая дата ПО'] if not pd.isnull(x['Плановая дата ПО']) and not pd.isnull(x['Фактическая дата']) else pd.NaT, axis=1)
@@ -79,9 +55,6 @@ def run_script(file_name):
         result = utils.create_pivot_table_and_get_div_list(Sheet1, 'Нарушение', 'Дивизион', 'Наименование завода', 'Назв. вида поставки')
         Sheet3 = result['table']
         division_list = result['div']
-
-        output_file_excel = utils.createEnvPath('PYTHON_SAVED_FILES_PATH', file_name)
-        output_file_html = os.path.splitext(output_file_excel)[0] + '.html'
 
         with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
             book = writer.book
@@ -105,22 +78,25 @@ def run_script(file_name):
                     worksheet.write(row_num + 1, 0, value)
 
         Sheet3.to_html(output_file_html, index=False)
-
         print(True)
 
-if len(sys.argv) < 2:
-    # нет файлов
-    print(False)
+
+load_obj = utils.load_file_obj(sys.argv[1:])
+output_file_excel = load_obj["output_file_excel"]
+output_file_html = load_obj["output_file_html"]
+files = load_obj["files"]
+
+isExistData = False
+current_data = None
+
+for file in files:
+    for sheet_name, sheet in file.items():
+        if 'Назв. вида поставки' in sheet.columns:
+            if sheet['Назв. вида поставки'].iloc[0] == 'Приём груза':
+                isExistData = True
+                current_data = sheet
+
+if isExistData:
+    run_script(current_data, output_file_excel, output_file_html)
 else:
-    # sys.argv[1] - загрузим первый файл, если их несколько то нужно загружать их в цикле for arg in sys.argv[1:]:
-    excel_file = utils.createEnvPath('SAVED_FILES_PATH', sys.argv[1])
-
-    Sheet1 = pd.read_excel(excel_file, sheet_name='Sheet1', engine='openpyxl')
-
-    if 'Назв. вида поставки' in Sheet1.columns:
-        if Sheet1['Назв. вида поставки'].iloc[0] == 'Приём груза':
-            run_script(sys.argv[1])
-        else:
-            print(False)
-    else:
-        print(False)
+    print(False)

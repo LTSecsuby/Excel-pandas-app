@@ -162,7 +162,7 @@
                                 </div>
                             </div>
                             <div class="card-action">
-                                <div style="display: flex;">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
                                     <div style="display: flex; justify-content: center; align-items: center;">
                                         <form id="python-upload-form" enctype="multipart/form-data">
                                             <div style="display: flex; align-items: center;" class="file-field input-field">
@@ -176,6 +176,15 @@
                                             </div>
                                         </form>
                                         <a onclick="savePython()" class="waves-effect waves-light btn">Сохранить</a>
+                                    </div>
+                                    <div style="display: flex;">
+                                        <div style="display: flex; align-items: center;">
+                                            <div class="input-field col s12" style="padding-right: 5px;">
+                                                <select id="videos-list" style="display: block;">
+                                                </select>
+                                            </div>
+                                            <a onclick="loadVideos()" class="waves-effect waves-light btn">Открыть видео</a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -494,6 +503,41 @@
                 
             }
 
+            function getVideosList() {
+                const currentUrl = window.location.href;
+                const url = currentUrl + 'videos';
+
+                const token = loadToken();
+                if (!token) { return; }
+
+                $.ajax({
+                    url: url,
+                    method: "GET",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    },
+                    dataType: 'json',
+                    async: true,
+                    success: function (videos) {
+                        const select = document.getElementById("videos-list");
+                        select.innerHTML = "";
+                        videos.forEach(function (video) {
+                            const option = document.createElement("option");
+                            const div = document.createElement("div");
+                            div.className = "video";
+                            const text = document.createTextNode(video.name);
+                            div.setAttribute("url", video.url);
+                            div.appendChild(text);
+                            option.appendChild(div);
+                            select.appendChild(option);
+                        });
+                    },
+                    error: function (error) {
+                        showAlertPopup("Видео не загружены");
+                    }
+                });
+            }
+
             function showDownloadTable() {
                 const downloadTable = document.getElementById("download-button-wrapper");
                 downloadTable.style.display = 'flex';
@@ -787,9 +831,22 @@
                 return false;
             }
 
+            function loadVideos() {
+                const selectValue = document.getElementById("videos-list");
+                const selectedOption = selectValue.options[selectValue.selectedIndex];
+                const selectedChild = selectedOption.firstChild;
+                closeSettingsPopup();
+                const url = selectedChild.getAttribute("url");
+                const link = document.createElement("a");
+                link.href = url;
+                link.target = "_blank";
+                link.click();
+            }
+
             loadToken();
             getTemplatesList();
             getSettingsList();
+            getVideosList();
 
             // $(document).ready(function() {
             //     $('#excelColumn').on('paste', function(event) {
