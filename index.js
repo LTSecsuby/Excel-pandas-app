@@ -350,6 +350,7 @@ app.get('/videos', (req, res) => {
   const videos = [
     { name: 'Обзорное видео', url: 'https://youtu.be/bz2SzRM92Pw' },
     { name: 'Дефолтный шаблон', url: 'https://youtu.be/UyICimz1LDk'},
+    { name: 'Создание скрипта', url: 'https://youtu.be/R_GiIPHZnHg'}
   ]
   res.status(200).json(videos);
 });

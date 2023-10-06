@@ -201,7 +201,7 @@ def run_script(current_data, output_file_excel, output_file_html):
         Sheet1['Эт:ФктВрРа'] = pd.to_timedelta(Sheet1['Эт:ФктВрРа'].astype(str))
 
         Sheet1['Эт:ФактДатаВремяП'] = (pd.to_datetime(Sheet1['Эт:ФктДатП_1 значение']) + Sheet1['Эт:ФктВрПр'])
-        Sheet1['Эт:ФактДатаВремяР'] = (pd.to_datetime(Sheet1['Эт:ФктДатР']) + Sheet1['Эт:ФктВрРа'])
+        Sheet1['Эт:ФактДатаВремяР'] = (pd.to_datetime(Sheet1['Эт:ФктДатР'], errors = 'coerce') + Sheet1['Эт:ФктВрРа'])
 
         Sheet1['Продолжительность выгрузки'] = Sheet1['Эт:ФактДатаВремяР'] - Sheet1['Эт:ФактДатаВремяП']
 
