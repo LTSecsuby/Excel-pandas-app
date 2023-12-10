@@ -24,11 +24,11 @@ import utils
 def run_script(data, output_file_excel, output_file_html):
     data = data.drop_duplicates()
 
-    values_to_drop = utils.load_settings_table_column_values('удалить.json', 'Доп склад')
+    values_to_drop = utils.load_settings_table_column_values('удалить Доп склад.json', 'Доп склад')
     data = data[~data['Наименование завода'].isin(values_to_drop)]
 
-    values_to_add_rp = utils.load_settings_table_column_values('дивизионы.json', 'РП')
-    values_to_add_div = utils.load_settings_table_column_values('дивизионы.json', 'Дивизион')
+    values_to_add_rp = utils.load_settings_table_column_values('Див, номер завода.json', 'РП')
+    values_to_add_div = utils.load_settings_table_column_values('Див, номер завода.json', 'Дивизион ТК')
     items_div = dict(zip(values_to_add_rp, values_to_add_div))
 
     data['Дивизион'] = data.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наименование завода', items_list=items_div, default_value='Пустой дивизион')

@@ -38,6 +38,59 @@ def check_plan_fact(value):
     else:
         return 'план-факт машин совпадает'
 
+def get_fact_days(row):
+    days_list = []
+    result = ''
+    if pd.notnull(row['пн']):
+        days_list.append('пн')
+    if pd.notnull(row['вт']):
+        days_list.append('вт')
+    if pd.notnull(row['ср']):
+        days_list.append('ср')
+    if pd.notnull(row['чт']):
+        days_list.append('чт')
+    if pd.notnull(row['пт']):
+        days_list.append('пт')
+    if pd.notnull(row['сб']):
+        days_list.append('сб')
+    if pd.notnull(row['вс']):
+        days_list.append('вс')
+    for day in days_list:
+        if len(result) > 0:
+            result += ','
+        result += day
+    return result
+
+def get_merge_day(row, day):
+    value = row[day]
+    if pd.notnull(value):
+        if day in row['График план'].split(','):
+            value = 1
+        else:
+            value = 0
+    else:
+        if day in row['График план'].split(','):
+            value = 0
+    return value
+
+def get_difference_count(row):
+    count = 0
+    if row['пн'] == 1:
+        count += 1
+    if row['вт'] == 1:
+        count += 1
+    if row['ср'] == 1:
+        count += 1
+    if row['чт'] == 1:
+        count += 1
+    if row['пт'] == 1:
+        count += 1
+    if row['сб'] == 1:
+        count += 1
+    if row['вс'] == 1:
+        count += 1
+    return count
+
 def day_of_week(date):
     day_number = date.isoweekday()
     if day_number == 1:
@@ -57,157 +110,123 @@ def day_of_week(date):
     else:
         return "ошибка"
 
+
+# fact_data - МБ 51
 def run_script(plan_data, fact_data, output_file_excel, output_file_html):
 
-    fact_data['день недели'] = fact_data['Эт:ФктДатО'].apply(day_of_week)
+    fact_data = fact_data.dropna(subset=['Завод'])
+    # Партия, Завод, Дата ввода
+    fact_data = fact_data.drop_duplicates(subset=['Партия', 'Завод', 'Дата ввода'])
+
+    fact_data['Партия'] = fact_data['Партия'].round().astype(int)
+    fact_data['партия+завод'] = fact_data['Партия'].astype(str) + fact_data['Завод'].astype(str)
 
     plan_data = plan_data.dropna(subset=['НаправПВГ'])
-    # Наименование завода и НаправПВГ
-    plan_data = plan_data.drop_duplicates(subset=['Наименование завода', 'НаправПВГ'])
+    # Наименование завода и НаправПВГ и Партия
+    plan_data = plan_data.drop_duplicates(subset=['Наименование завода', 'НаправПВГ', 'Партия'])
 
-    # ЗвдОтпрвк, Назн.:Звд, Эт:ФктДатО
-    fact_data = fact_data.drop_duplicates(subset=['ЗвдОтпрвк', 'Назн.:Звд', 'Эт:ФктДатО'])
+    plan_data['партия+завод'] = plan_data['Партия'].astype(str) + plan_data['Завод'].astype(str)
 
-    values_to_add_pref = utils.load_settings_table_column_values('дивизионы.json', 'Префикс')
-    values_to_add_rp = utils.load_settings_table_column_values('дивизионы.json', 'РП')
-    values_to_add_div = utils.load_settings_table_column_values('дивизионы.json', 'Дивизион')
-    values_to_add_rp_num = utils.load_settings_table_column_values('дивизионы.json', 'Номер города')
+    values_to_add_pref = utils.load_settings_table_column_values('Див, номер завода.json', 'Префикс')
+    values_to_add_rp = utils.load_settings_table_column_values('Див, номер завода.json', 'РП')
+    values_to_add_div = utils.load_settings_table_column_values('Див, номер завода.json', 'Дивизион ТК')
+    values_to_add_rp_num = utils.load_settings_table_column_values('Див, номер завода.json', 'Номер завода')
 
     items_pref_rp = dict(zip(values_to_add_pref, values_to_add_rp))
     items_num_rp = dict(zip(values_to_add_rp_num, values_to_add_rp))
     items_rp_div = dict(zip(values_to_add_rp, values_to_add_div))
 
-    plan_data['куда'] = plan_data.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='НаправПВГ', items_list=items_pref_rp)
     plan_data['див'] = plan_data.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наименование завода', items_list=items_rp_div)
-
-    fact_data['з-д откуда'] = fact_data.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='ЗвдОтпрвк', items_list=items_num_rp)
-    fact_data['з-д куда'] = fact_data.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Назн.:Звд', items_list=items_num_rp)
-    fact_data['див'] = fact_data.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='з-д откуда', items_list=items_rp_div)
+    plan_data['див откуда'] = plan_data.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наим завод откуда', items_list=items_rp_div)
+    plan_data['див куда'] = plan_data.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наим завод куда', items_list=items_rp_div)
 
      # удалить рп и див по списку в инструкции
     plan_data = plan_data[~plan_data['Наименование завода'].str.contains('Москва-Щербинка')]
+    plan_data = plan_data[~plan_data['Наим завод откуда'].str.contains('Москва-Щербинка')]
+    plan_data = plan_data[~plan_data['Наим завод куда'].str.contains('Москва-Щербинка')]
+
     plan_data = plan_data.loc[plan_data['див'] != 'Ритейл']
     plan_data = plan_data.loc[plan_data['див'] != 'Аэропорт']
-    fact_data = fact_data[~fact_data['з-д откуда'].str.contains('Шенкер')]
-    fact_data = fact_data[~fact_data['з-д откуда'].str.contains('Москва-Щербинка')]
-    fact_data = fact_data.loc[fact_data['див'] != 'Аэропорт']
+    plan_data = plan_data.loc[plan_data['див'] != 'удалить из выгрузки']
 
-    plan_data['откуда-куда план'] = plan_data['Наименование завода'].str.cat(plan_data['куда'], sep=';')
-    plan_data = plan_data.sort_values(by='откуда-куда план')
+    plan_data = plan_data.loc[plan_data['див откуда'] != 'Ритейл']
+    plan_data = plan_data.loc[plan_data['див откуда'] != 'Аэропорт']
+    plan_data = plan_data.loc[plan_data['див откуда'] != 'удалить из выгрузки']
 
-    fact_data['откуда-куда факт'] = fact_data['з-д откуда'].str.cat(fact_data['з-д куда'], sep=';')
+    plan_data = plan_data.loc[plan_data['див куда'] != 'Ритейл']
+    plan_data = plan_data.loc[plan_data['див куда'] != 'Аэропорт']
+    plan_data = plan_data.loc[plan_data['див куда'] != 'удалить из выгрузки']
 
-    res_dict = {}
-    for index, row in fact_data.iterrows():
-        key = row['откуда-куда факт']
-        value = row['день недели']
-        if key in res_dict:
-            res_dict[key] += "," + value
-        else:
-            res_dict[key] = value
+    plan_data = plan_data.dropna(subset=['ГрафДвижТС'])
+    mask = plan_data['ГрафДвижТС'].apply(check_days_in_value)
+    plan_data = plan_data[~mask]
 
-    Sheet2 = pd.DataFrame.from_dict(res_dict, orient='index', columns=['день недели'])
-    Sheet2.index.name = 'откуда-куда факт'
-    Sheet2 = Sheet2.sort_values(by='откуда-куда факт')
-    Sheet2.reset_index(inplace=True)
+    merged_data = pd.DataFrame()
+    merged_data = pd.merge(plan_data, fact_data[['партия+завод', 'Дата ввода']], on='партия+завод', how='left')
+    merged_data.rename(columns={'Дата ввода': 'дата ввода из мб51'}, inplace=True)
 
-    # Объединение таблиц по колонкам
-    merged_df = plan_data.merge(Sheet2, left_on='откуда-куда план', right_on='откуда-куда факт')
+    merged_data = merged_data.sort_values(by='дата ввода из мб51')
+    merged_data['куда'] = merged_data.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='НаправПВГ', items_list=items_pref_rp)
 
-    merged_df = merged_df.dropna(subset=['ГрафДвижТС'])
+    merged_data = merged_data.dropna(subset=['дата ввода из мб51'])
 
-    mask = merged_df['ГрафДвижТС'].apply(check_days_in_value)
+    merged_data = merged_data.drop_duplicates(subset=['Наименование завода', 'куда', 'дата ввода из мб51'])
 
-    merged_df = merged_df[~mask]
+    merged_data['откуда-куда'] = merged_data['Наименование завода'].str.cat(merged_data['куда'], sep=';')
 
-    merged_df['кол-во машин факт'] = merged_df['день недели'].str.split(',').str.len()
-    merged_df['кол-во машин план'] = merged_df['ГрафДвижТС'].str.split(',').str.len()
+    merged_data['дата ввода из мб51 значение'] = pd.to_datetime(merged_data['дата ввода из мб51'], format='%Y-%m-%dT%H:%M:%S.%f')
 
-    merged_df['сравнение план-факт'] = merged_df['кол-во машин факт'] - merged_df['кол-во машин план']
-    merged_df['Выводы по количеству машин план-факт'] = merged_df['сравнение план-факт'].apply(check_plan_fact)
+    merged_data['График факт'] = merged_data['дата ввода из мб51 значение'].apply(day_of_week)
 
-    result_table = pd.DataFrame()
+    temporary_table = pd.DataFrame()
 
-    result_table['откуда-куда'] = merged_df['откуда-куда факт']
+    temporary_table = pd.pivot_table(merged_data,
+            index='откуда-куда',
+            columns='График факт',
+            values='дата ввода из мб51 значение',
+            aggfunc='count')
 
-    result_table['пн(план)'] = merged_df['ГрафДвижТС'].apply(get_current_day_count_in_value, day='пн')
-    result_table['вт(план)'] = merged_df['ГрафДвижТС'].apply(get_current_day_count_in_value, day='вт')
-    result_table['ср(план)'] = merged_df['ГрафДвижТС'].apply(get_current_day_count_in_value, day='ср')
-    result_table['чт(план)'] = merged_df['ГрафДвижТС'].apply(get_current_day_count_in_value, day='чт')
-    result_table['пт(план)'] = merged_df['ГрафДвижТС'].apply(get_current_day_count_in_value, day='пт')
-    result_table['сб(план)'] = merged_df['ГрафДвижТС'].apply(get_current_day_count_in_value, day='сб')
-    result_table['вс(план)'] = merged_df['ГрафДвижТС'].apply(get_current_day_count_in_value, day='вс')
+    temporary_table = temporary_table.reset_index()
 
-    result_table['пн(факт)'] = merged_df['день недели'].apply(get_current_day_count_in_value, day='пн')
-    result_table['вт(факт)'] = merged_df['день недели'].apply(get_current_day_count_in_value, day='вт')
-    result_table['ср(факт)'] = merged_df['день недели'].apply(get_current_day_count_in_value, day='ср')
-    result_table['чт(факт)'] = merged_df['день недели'].apply(get_current_day_count_in_value, day='чт')
-    result_table['пт(факт)'] = merged_df['день недели'].apply(get_current_day_count_in_value, day='пт')
-    result_table['сб(факт)'] = merged_df['день недели'].apply(get_current_day_count_in_value, day='сб')
-    result_table['вс(факт)'] = merged_df['день недели'].apply(get_current_day_count_in_value, day='вс')
+    merged_df = pd.DataFrame()
+    merged_df = pd.merge(temporary_table, merged_data[['откуда-куда', 'ГрафДвижТС']], on='откуда-куда', how='left')
 
-    result_table['Итого пн'] = (result_table['пн(план)'] > 0) & (result_table['пн(факт)'] >= result_table['пн(план)'])
-    result_table['Итого вт'] = (result_table['вт(план)'] > 0) & (result_table['вт(факт)'] >= result_table['вт(план)'])
-    result_table['Итого ср'] = (result_table['ср(план)'] > 0) & (result_table['ср(факт)'] >= result_table['ср(план)'])
-    result_table['Итого чт'] = (result_table['чт(план)'] > 0) & (result_table['чт(факт)'] >= result_table['чт(план)'])
-    result_table['Итого пт'] = (result_table['пт(план)'] > 0) & (result_table['пт(факт)'] >= result_table['пт(план)'])
-    result_table['Итого сб'] = (result_table['сб(план)'] > 0) & (result_table['сб(факт)'] >= result_table['сб(план)'])
-    result_table['Итого вс'] = (result_table['вс(план)'] > 0) & (result_table['вс(факт)'] >= result_table['вс(план)'])
+    merged_df.rename(columns={'ГрафДвижТС': 'График план'}, inplace=True)
 
-    result_table['пн(план/факт)'] = ''
-    result_table['вт(план/факт)'] = ''
-    result_table['ср(план/факт)'] = ''
-    result_table['чт(план/факт)'] = ''
-    result_table['пт(план/факт)'] = ''
-    result_table['сб(план/факт)'] = ''
-    result_table['вс(план/факт)'] = ''
+    merged_df = merged_df.drop_duplicates(subset=['График план', 'откуда-куда'])
 
-    mask1 = result_table['пн(план)'] > 0
-    mask2 = result_table['вт(план)'] > 0
-    mask3 = result_table['ср(план)'] > 0
-    mask4 = result_table['чт(план)'] > 0
-    mask5 = result_table['пт(план)'] > 0
-    mask6 = result_table['сб(план)'] > 0
-    mask7 = result_table['вс(план)'] > 0
+    merged_df['График факт'] = merged_df.apply(get_fact_days, axis=1)
 
-    result_table.loc[mask1, 'пн(план/факт)'] = result_table['пн(план)'].astype(str) + ' / ' + result_table['пн(факт)'].astype(str)
-    result_table.loc[mask2, 'вт(план/факт)'] = result_table['вт(план)'].astype(str) + ' / ' + result_table['вт(факт)'].astype(str)
-    result_table.loc[mask3, 'ср(план/факт)'] = result_table['ср(план)'].astype(str) + ' / ' + result_table['ср(факт)'].astype(str)
-    result_table.loc[mask4, 'чт(план/факт)'] = result_table['чт(план)'].astype(str) + ' / ' + result_table['чт(факт)'].astype(str)
-    result_table.loc[mask5, 'пт(план/факт)'] = result_table['пт(план)'].astype(str) + ' / ' + result_table['пт(факт)'].astype(str)
-    result_table.loc[mask6, 'сб(план/факт)'] = result_table['сб(план)'].astype(str) + ' / ' + result_table['сб(факт)'].astype(str)
-    result_table.loc[mask7, 'вс(план/факт)'] = result_table['вс(план)'].astype(str) + ' / ' + result_table['вс(факт)'].astype(str)
+    merged_df['кол-во машин факт'] = merged_df['График факт'].str.split(',').str.len()
+    merged_df['кол-во машин план'] = merged_df['График план'].str.split(',').str.len()
 
-    result_table['Итого по факт'] = result_table['Итого пн'].astype(int) + result_table['Итого вт'].astype(int) + result_table['Итого ср'].astype(int) + result_table['Итого чт'].astype(int) + result_table['Итого пт'].astype(int) + result_table['Итого сб'].astype(int) + result_table['Итого вс'].astype(int)
-    result_table['Итого по плану'] = merged_df['кол-во машин план']
+    merged_df['пн'] = merged_df.apply(get_merge_day, day='пн', axis=1)
+    merged_df['вт'] = merged_df.apply(get_merge_day, day='вт', axis=1)
+    merged_df['ср'] = merged_df.apply(get_merge_day, day='ср', axis=1)
+    merged_df['чт'] = merged_df.apply(get_merge_day, day='чт', axis=1)
+    merged_df['пт'] = merged_df.apply(get_merge_day, day='пт', axis=1)
+    merged_df['сб'] = merged_df.apply(get_merge_day, day='сб', axis=1)
+    merged_df['вс'] = merged_df.apply(get_merge_day, day='вс', axis=1)
 
-    percentage_column = (result_table['Итого по факт'] / result_table['Итого по плану'])
-    result_table['% качества'] = percentage_column.round(4)
-    result_table['Выводы'] = np.where(result_table['% качества'] == 1, 'В соответствии с графиком', 'с нарушением графика')
+    merged_df['итого/факт совпадений с планом'] = merged_df.apply(get_difference_count, axis=1)
 
-    columns_to_remove = ['пн(план)', 'вт(план)', 'ср(план)', 'чт(план)', 'пт(план)',
-                     'сб(план)', 'вс(план)', 'пн(факт)', 'вт(факт)', 'ср(факт)',
-                     'чт(факт)', 'пт(факт)', 'сб(факт)', 'вс(факт)', 'Итого пн',
-                     'Итого вт', 'Итого ср', 'Итого чт', 'Итого пт', 'Итого сб', 'Итого вс']
+    merged_df['% качества'] = (merged_df['итого/факт совпадений с планом'] / merged_df['кол-во машин план'] * 100).round(2)
 
-    result_table = result_table.drop(columns=columns_to_remove)
+    merged_df['Выводы'] = merged_df['% качества'].apply(lambda x: 'В соответствии с графиком' if x == 100 else 'С нарушением графика')
 
     with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
         book = writer.book
-        percent_format = book.add_format({'num_format': '0.00%'})
-        bold_format = book.add_format({'bold': True})
 
-        Sheet2.to_excel(writer, sheet_name="Sheet3", index=False)
-        merged_df.to_excel(writer, sheet_name="Sheet4", index=False)
-        result_table.to_excel(writer, sheet_name="Итоги", index=False)
-        worksheet = writer.sheets["Итоги"]
+        merged_data.to_excel(writer, sheet_name="merged", index=False)
+        temporary_table.to_excel(writer, sheet_name="сводная из сроков доставки", index=False)
+        merged_df.to_excel(writer, sheet_name="итоги", index=False)
+        worksheet = writer.sheets["итоги"]
 
-        worksheet.set_column('K:K', 16, percent_format)
         worksheet.set_column('A:A', 28)
-        worksheet.set_column('B:J', 16)
-        worksheet.set_column('L:L', 28)
+        worksheet.set_column('I:J', 16)
+        worksheet.set_column('O:O', 28)
 
-    result_table.to_html(output_file_html, index=False)
+    merged_df.to_html(output_file_html, index=False)
 
     print(True)
 
@@ -229,9 +248,10 @@ for file in files:
             if current_sheet['Наим операции'].iloc[0] == 'Принятие транзитного груза' or current_sheet['Наим операции'].iloc[0] == 'Забор из города' or current_sheet['Наим операции'].iloc[0] == 'Получение от клиента':
                 plan_data = current_sheet
                 isExistPlan = True
-        elif 'Узел отправки' in current_sheet.columns and 'Целевой узел' in current_sheet.columns:
-            fact_data = current_sheet
-            isExistFact = True
+        elif 'Вид движения' in current_sheet.columns and 'Партия' in current_sheet.columns:
+            if current_sheet['Вид движения'].iloc[0] == 641:
+                fact_data = current_sheet
+                isExistFact = True
 if isExistPlan and isExistFact:
     run_script(plan_data, fact_data, output_file_excel, output_file_html)
 else:

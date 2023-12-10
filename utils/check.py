@@ -15,6 +15,15 @@ import json
 # row_name - название столбца
 # items_list - список столбцов для которых нужно сделать новые значения
 # default_value - значение если в списке не найдей ключ
+def check_value_in_list_and_set_value_lists(row, row_name, items_list_key, items_list_value, default_value=None):
+    for index, value in enumerate(items_list_key):
+        if row[row_name] == value:
+            return items_list_value[index]
+    if default_value:
+        return default_value
+    else:
+        return 'нет значения'
+
 def check_value_in_list_and_set_value(row, row_name, items_list, default_value=None):
     for key, value in items_list.items():
         if row[row_name] == key:
@@ -39,6 +48,7 @@ def check_null_pointer_in_table_value(table, find_column_name, value_column_name
         output_file_json = os.path.splitext(error_json)[0] + '.json'
         error = pd.DataFrame()
         error['error'] = unknowns
+        error['name'] = find_column_name
         error = error.drop_duplicates(subset='error')
         with open(output_file_json, 'w', encoding='utf-8') as file:
             error.to_json(output_file_json, force_ascii=False)

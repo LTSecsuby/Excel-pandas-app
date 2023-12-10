@@ -55,10 +55,10 @@ Sheet2 = pd.DataFrame()
 # в метод в качестве параметров передается название настройки это например дивизионы.json или любое другое, а также название колонки в таблице
 # это например Склад
 # и в переменных будут лежать списки данных из соответствующей колонки настройки
-values_to_add_stock = utils.load_settings_table_column_values('дивизионы.json', 'Склад')
-values_to_add_rp_num = utils.load_settings_table_column_values('дивизионы.json', 'Номер города')
-values_to_add_rp = utils.load_settings_table_column_values('дивизионы.json', 'РП')
-values_to_add_div = utils.load_settings_table_column_values('дивизионы.json', 'Дивизион')
+values_to_add_stock = utils.load_settings_table_column_values('Див, номер завода.json', 'Категория')
+values_to_add_rp_num = utils.load_settings_table_column_values('Див, номер завода.json', 'Номер завода')
+values_to_add_rp = utils.load_settings_table_column_values('Див, номер завода.json', 'РП')
+values_to_add_div = utils.load_settings_table_column_values('Див, номер завода.json', 'Дивизион ТК')
 
 # далее списки можно объединить в словари ключ-значение, для удобных соответствий
 # items_num_rp = dict(zip(values_to_add_rp_num, values_to_add_rp))

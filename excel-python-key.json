@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "excel-python-403102",
+  "private_key_id": "0a497804bd86dc5cefb7db02812d529453a86021",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDn6VyURp8YsQ/c\nhkwAbGwGijXHrEA/cX1CZNEgI1cYGbzoPrcNqkw6F3TET6fgeSLMWUNZ7qONRz2L\n5sK87Z2AxjAu2eSl7i8RQ8lOjBZqPUl1ssHzJxiVXuGG1SMEHCRpSPg+Qlwclhut\n1+7q/2jVJQB+17VZ9PER7xU/iAXB+gF0549tDMGaQ4fxoTU2d7j7pNMJvQY0Y+wD\n+yKdtcTt7xLyu1F8GitFnmYs8nFALBQ7tLMk+2yn4bdBRDoXq9wEQ3lxHV6SZMAR\nP0kEnNb4kOCtGw4raRqm+3ARR1rdeCDdVePR/CZmes2iiC1xDO6M9lH/Ei0+h6t4\ndAvlnMyXAgMBAAECggEAAa7ARLUkd13lgxCYYZJn0D5VeI7n4m303jP0DnsjKSIa\nrEa0Nk2rgupjpv769VZ7qabmJbNlDWPcbvTsKcnBkEsf018yWP/a6JGo1sCOcxPh\nwhBbduOsOn03Pq6yM9fubbMhVfZOS8jNB5xe9+aFgLJliAYRo0bzLtGgwla+z/L4\nYZD5Z+EB5ylf/C8/1/FXT0rv/AWRt04WTmZw1FZvdXaXN5v/jSWQkdDUYyPtxLFE\n92XNsfSlew2CwjIWQ3x2FR3JhSKOcXPVy1QeLvOg8qg05Qeghl2dtiOtWHU860TL\ny3gtlOi4nBukWa58AAhjrHlS852mT3M26k7xFEE9rQKBgQD1I5kTUcSkZeSNR57f\ngzEs6USbn/ry5Pybii+Hnd0224Tja05L5RYovLcelyvSnxeVuNYGp222xd9u9WCO\n8h1bQ7MwjGWBpmU7lr1tZxmR2n6O2pdG3AhQ4lHkXCGlLs7ip07dpZxeqsc1+gee\nxpQ9hpZ7KQrI8R1LWlu47TMvJQKBgQDyL7xUWG9Dm5cpM7VUyg6wVyfOc2uJjWxe\newIgoxoT6gJzQdvXevUWhOt6NYE3u7WnVpPJ9jxzBDNgaZVbKGWMjgansLkqtoxw\nvVBSBYV6Q2fk8TDWqGd580rMgn6b1h3Eqcs8gLykBdzNDYmcp5HiXD9OqHsu8vRF\n/mhVjnLOCwKBgCr8RwdgOz8ort8nQ/ClrKXXcbRoZTTaeoE7xgHd6MCJ1c+bLWuZ\njD0welve3kxcoWIbu0wHZ/G42Ok4Fep7AjLSuEU3GUWWzAGa+TSJ863jxnV+VzCR\nvNOSHBITJcM1ZgnQlL/BHp5rC+unIFbzM2NmilSmacG6pgxkl9jhnywRAoGBAIxY\nMVDHdqK9FVnhByG9fcmemAjBRf4OIFCYA+GZ4tDLeOQFtDoonMKSAEtvmhQMCPaR\n607MDLeyJXunc8/BlydeXmjqtkMUSkpCyrrdTD5PtXMsedrK+DvpSt08edYgvFts\n8cN77tU2OH/zal2HlbiRMHaKl+fbDsdI6Hk79TeFAoGAfQsMXmmzli57HO29UImA\nKpCueX+lCSlGpxMMNNMXBNgMOT6IstewA2JqTWLwBwBeooE9t3QlipyU03rlO2Yd\nnT7Udb9HMPumozsUYSEgt3vSmGAo8l/30l97mbmEkKErXrPrr60ZDZ+tZO8eFE9g\np/rnQYXCHKLRY4yEjQLcvwo=\n-----END PRIVATE KEY-----\n",
+  "client_email": "excelpythonaccount@excel-python-403102.iam.gserviceaccount.com",
+  "client_id": "115631930005443454265",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/excelpythonaccount%40excel-python-403102.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

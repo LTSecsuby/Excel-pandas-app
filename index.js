@@ -7,6 +7,10 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const fsP = require('fs').promises;
 
+const { GoogleSpreadsheet } = require('google-spreadsheet');
+const { JWT } = require('google-auth-library');
+const creds = require('./excel-python-key.json');
+
 const app = express();
 app.use(express.json());
 
@@ -84,6 +88,65 @@ const checkAuthorization = (req, res, next) => {
   // Продолжение выполнения следующего middleware или основного запроса
   next();
 };
+
+async function accessSpreadsheet() {
+  const SCOPES = [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file',
+  ];
+
+  const jwt = new JWT({
+    email: creds.client_email,
+    key: creds.private_key,
+    scopes: SCOPES,
+  });
+
+  const docId = '1JpO3TFxRw-QvBLiTdW9adastEGhhIrFbHbo45yG72Gs';
+  const doc = new GoogleSpreadsheet(docId, jwt);
+
+  await doc.loadInfo();
+
+  const sheet = doc.sheetsByTitle['Див, номер завода'];
+  await sheet.loadHeaderRow();
+  const rows = await sheet.getRows();
+
+  const extractedData = rows.filter((row) => {
+    if (row.get('РП') && row.get('Дивизион ТК') && row.get('Номер завода')
+      && row.get('Префикс') && row.get('Префикс2')
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  });
+
+  const jsonData = {
+    title: "Див, номер завода",
+    table: [
+      {key: "РП", values: []},
+      {key: "Дивизион ТК", values: []},
+      {key: "Номер завода", values: []},
+      {key: "Категория", values: []},
+      {key: "Префикс", values: []},
+      {key: "Префикс2", values: []},
+      {key: "Час пояс к Екб", values: []},
+      {key: "Час пояс к Екб2", values: []}
+    ]
+  }
+
+  extractedData.forEach((row) => {
+    jsonData.table.find(item => item.key === 'РП').values.push(row.get('РП'));
+    jsonData.table.find(item => item.key === 'Дивизион ТК').values.push(row.get('Дивизион ТК'));
+    jsonData.table.find(item => item.key === 'Номер завода').values.push(row.get('Номер завода'));
+    jsonData.table.find(item => item.key === 'Категория').values.push(row.get('Категория') ? row.get('Категория') : '1');
+    jsonData.table.find(item => item.key === 'Префикс').values.push(row.get('Префикс'));
+    jsonData.table.find(item => item.key === 'Префикс2').values.push(row.get('Префикс2'));
+    jsonData.table.find(item => item.key === 'Час пояс к Екб').values.push(row.get('Час пояс к Екб') ? row.get('Час пояс к Екб') : '0');
+    jsonData.table.find(item => item.key === 'Час пояс к Екб2').values.push(row.get('Час пояс к Екб2') ? row.get('Час пояс к Екб2') : 'прибавить');
+  });
+
+  fs.writeFileSync(directorySettings + `/${jsonData.title}` + '.json', JSON.stringify(jsonData))
+}
 
 app.use(checkAuthorization);
 
@@ -190,6 +253,11 @@ app.post('/instruction', async (req, res) => {
 //     });
 // });
 
+app.get('/update_google_docs', async (req, res) => {
+  await accessSpreadsheet().catch(console.error);
+  res.status(200).json({ result: true });
+});
+
 app.post('/new_setting', (req, res) => {
   res.status(200).json({ result: true });
   fs.writeFileSync(directorySettings + `/${req.body.title}` + '.json', JSON.stringify(req.body))
@@ -265,10 +333,11 @@ app.post('/python', multer_upload_excel.array('files'), (req, res) => {
             res.status(500).send('Error reading file');
           } else {
             data = JSON.parse(data);
-            let result = 'Нет дивизиона у: ';
+            let result = `Отсутствует ${data.name['0']} у: `;
             for (let key in data.error) {
-              result = result + data.error[key]
+              result = result + ` ${data.error[key]}`
             }
+            console.log('Error msg', result)
             res.status(200).json({ result: result });
             res.on('finish', () => {
               deleteFiles(filesList);

@@ -156,6 +156,9 @@
                                         </div>
                                         <a onclick="loadCurrentSetting()" class="waves-effect waves-light btn">Загрузить настройку</a>
                                     </div>
+                                    <div style="display: flex; align-items: center;">
+                                        <a style="margin-left: 10px;" onclick="updateGoogleDocs()" class="waves-effect waves-light btn">Обновить из google</a>
+                                    </div>
                                 </div>
                                 <div id="settingsItem" class="settings-items">
             
@@ -689,6 +692,45 @@
 
             }
 
+            function updateGoogleDocs() {
+                const currentUrl = window.location.href;
+                const url = currentUrl + 'update_google_docs';
+
+                const token = loadToken();
+                if (!token) { return; }
+                showLoader();
+
+                $.ajax({
+                    url: url,
+                    method: "GET",
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    },
+                    dataType: 'json',
+                    async: true,
+                    success: function (obj) {
+                        hiddenLoader();
+                        showAlertPopup("Настройка сохранена");
+
+                        const name = 'Див, номер завода' + '.json';
+                        const select = document.getElementById("settings-list");
+
+                        if (!hasOption(name, select)) {
+                            const option = document.createElement("option");
+                            const div = document.createElement("div");
+                            div.className = "setting";
+                            div.appendChild(document.createTextNode(name));
+                            option.appendChild(div);
+                            select.appendChild(option);
+                        }
+                    },
+                    error: function (error) {
+                        hiddenLoader();
+                        showAlertPopup("Настройки не загружены");
+                    }
+                });
+            }
+
             function saveSetting(obj) {
                 const currentUrl = window.location.href;
                 const url = currentUrl + 'new_setting';
@@ -1067,6 +1109,7 @@
                 justify-content: center;
                 margin-top: 20%;
                 position: fixed;
+                z-index: 1000;
             }
 
             #pandas-table table {

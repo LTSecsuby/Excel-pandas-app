@@ -61,24 +61,18 @@ Sheet1['Номер документа-основания= Ключ объект�
 
 Sheet1 = Sheet1.sort_values(by='Дата/время размещения фотографий/документов')
 
-values_to_add_rp = utils.load_settings_table_column_values('дивизионы.json', 'РП')
-values_to_add_rp_num = utils.load_settings_table_column_values('дивизионы.json', 'Номер города')
+values_to_add_rp = utils.load_settings_table_column_values('Див, номер завода.json', 'РП')
+values_to_add_rp_num = utils.load_settings_table_column_values('Див, номер завода.json', 'Номер завода')
 items_num_rp = dict(zip(values_to_add_rp_num, values_to_add_rp))
 
-Sheet1['Наименован завода польз'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Завод пользователя', items_list=items_num_rp)
+Sheet1['Наименован завода польз'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Завод пользователя', items_list=items_num_rp, default_value='Пустая завод')
 
-Sheet1['ввв'] = Sheet1['Номер документа-основания= Ключ объекта'].astype(str).str.slice(0, 10) + Sheet1['Наименован завода польз'].astype(str)
-
-unknowns_div = Sheet1.loc[Sheet1['Наименован завода польз'] == 'нет значения', 'Завод пользователя'].tolist()
-if len(unknowns_div) > 0:
-    error_json = utils.createEnvPath('SAVED_ERRPR_PATH', 'unknowns_division')
-    output_file_json = os.path.splitext(error_json)[0] + '.json'
-    error = pd.DataFrame()
-    error['error'] = unknowns_div
-    with open(output_file_json, 'w', encoding='utf-8') as file:
-        error.to_json(output_file_json, force_ascii=False)
+error_rp = utils.check_null_pointer_in_table_value(Sheet1, 'Наименован завода польз', 'Завод пользователя', 'Пустая завод')
+if error_rp:
     print('unknowns_division')
 else:
+    Sheet1['ввв'] = Sheet1['Номер документа-основания= Ключ объекта'].astype(str).str.slice(0, 10) + Sheet1['Наименован завода польз'].astype(str)
+
     Sheet1.to_excel(output_file_excel, index=False)
 
     # тут можно накинуть стилей в уже сохраненные листы файла, сохранить нужные листы и тд (примеры ниже)

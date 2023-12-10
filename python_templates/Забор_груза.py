@@ -26,59 +26,60 @@ def run_script(data, output_file_excel, output_file_html):
 
     Sheet1 = Sheet1.drop_duplicates(subset='Документ сбыта')
 
-    values_to_drop = utils.load_settings_table_column_values('удалить.json', 'Доп склад')
+    values_to_drop = utils.load_settings_table_column_values('удалить Доп склад.json', 'Доп склад')
     Sheet1 = Sheet1[~Sheet1['Наименование завода'].isin(values_to_drop)]
 
-    values_to_add_rp = utils.load_settings_table_column_values('дивизионы.json', 'РП')
-    values_to_add_div = utils.load_settings_table_column_values('дивизионы.json', 'Дивизион')
+    values_to_add_rp = utils.load_settings_table_column_values('Див, номер завода.json', 'РП')
+    values_to_add_div = utils.load_settings_table_column_values('Див, номер завода.json', 'Дивизион ТК')
     items = dict(zip(values_to_add_rp, values_to_add_div))
 
-    Sheet1['Дивизион'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наименование завода', items_list=items)
+    Sheet1['Дивизион'] = Sheet1.apply(utils.check_value_in_list_and_set_value, axis=1, row_name='Наименование завода', items_list=items, default_value='Пустой дивизион')
     Sheet1 = Sheet1.loc[Sheet1['Дивизион'] != 'Ритейл']
 
-    error = utils.check_null_pointer_in_table_value(Sheet1, 'Дивизион', 'Наименование завода', 'нет значения')
+    error = utils.check_null_pointer_in_table_value(Sheet1, 'Дивизион', 'Наименование завода', 'Пустой дивизион')
     if error:
         print('unknowns_division')
-    else:
-        Sheet1['Отклонение'] = Sheet1.apply(lambda x: x['Фактическая дата'] - x['Плановая дата ПО'] if not pd.isnull(x['Плановая дата ПО']) and not pd.isnull(x['Фактическая дата']) else pd.NaT, axis=1)
-        Sheet1['Отклонение'] = Sheet1['Отклонение'].apply(lambda x: x.total_seconds() / 86400 if not pd.isnull(x) else np.nan)
-        Sheet1['Нарушение'] = Sheet1.apply(lambda x: 'да' if (pd.notnull(x['Отклонение']) and x['Отклонение'] > 0) else 'нет', axis=1)
-        Sheet1['Отклонение'] = Sheet1['Отклонение'].fillna(value='нет данных')
-        Sheet1.loc[Sheet1['Отклонение'] == 'нет данных', 'Нарушение'] = 'да'
+        return
 
-        # utils.create_pivot_table_and_get_div_list - создать сводную типа нарушение да нет процент итого и возвращает ее и список дивизионов в итоговой таблице
-        # data_table - исходная таблица с данными
-        # violation_col - столбц с данными по нарушениями
-        # div_col_name - название столбца с дивизионами
-        # rp_col_name - название столбца с заводами
-        # values_col_name - название столбца значений
-        result = utils.create_pivot_table_and_get_div_list(Sheet1, 'Нарушение', 'Дивизион', 'Наименование завода', 'Назв. вида поставки')
-        Sheet3 = result['table']
-        division_list = result['div']
+    Sheet1['Отклонение'] = Sheet1.apply(lambda x: x['Фактическая дата'] - x['Плановая дата ПО'] if not pd.isnull(x['Плановая дата ПО']) and not pd.isnull(x['Фактическая дата']) else pd.NaT, axis=1)
+    Sheet1['Отклонение'] = Sheet1['Отклонение'].apply(lambda x: x.total_seconds() / 86400 if not pd.isnull(x) else np.nan)
+    Sheet1['Нарушение'] = Sheet1.apply(lambda x: 'да' if (pd.notnull(x['Отклонение']) and x['Отклонение'] > 0) else 'нет', axis=1)
+    Sheet1['Отклонение'] = Sheet1['Отклонение'].fillna(value='нет данных')
+    Sheet1.loc[Sheet1['Отклонение'] == 'нет данных', 'Нарушение'] = 'да'
 
-        with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
-            book = writer.book
-            percent_format = book.add_format({'num_format': '0.00%'})
-            bold_format = book.add_format({'bold': True})
+    # utils.create_pivot_table_and_get_div_list - создать сводную типа нарушение да нет процент итого и возвращает ее и список дивизионов в итоговой таблице
+    # data_table - исходная таблица с данными
+    # violation_col - столбц с данными по нарушениями
+    # div_col_name - название столбца с дивизионами
+    # rp_col_name - название столбца с заводами
+    # values_col_name - название столбца значений
+    result = utils.create_pivot_table_and_get_div_list(Sheet1, 'Нарушение', 'Дивизион', 'Наименование завода', 'Назв. вида поставки')
+    Sheet3 = result['table']
+    division_list = result['div']
 
-            Sheet1.to_excel(writer, sheet_name="Sheet1", index=False)
-            Sheet3.to_excel(writer, sheet_name="Sheet2", index=False)
-            worksheet = writer.sheets["Sheet2"]
+    with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
+        book = writer.book
+        percent_format = book.add_format({'num_format': '0.00%'})
+        bold_format = book.add_format({'bold': True})
 
-            worksheet.set_column('E:E', 18, percent_format)
-            worksheet.set_column('A:A', 28)
-            worksheet.set_column('B:D', 18)
+        Sheet1.to_excel(writer, sheet_name="Sheet1", index=False)
+        Sheet3.to_excel(writer, sheet_name="Sheet2", index=False)
+        worksheet = writer.sheets["Sheet2"]
 
-            column_values = Sheet3['Наименование завода'].values.tolist()
+        worksheet.set_column('E:E', 18, percent_format)
+        worksheet.set_column('A:A', 28)
+        worksheet.set_column('B:D', 18)
 
-            for row_num, value in enumerate(column_values):
-                if value in division_list:
-                    worksheet.write(row_num + 1, 0, value, bold_format)
-                else:
-                    worksheet.write(row_num + 1, 0, value)
+        column_values = Sheet3['Наименование завода'].values.tolist()
 
-        Sheet3.to_html(output_file_html, index=False)
-        print(True)
+        for row_num, value in enumerate(column_values):
+            if value in division_list:
+                worksheet.write(row_num + 1, 0, value, bold_format)
+            else:
+                worksheet.write(row_num + 1, 0, value)
+
+    Sheet3.to_html(output_file_html, index=False)
+    print(True)
 
 
 load_obj = utils.load_file_obj(sys.argv[1:])

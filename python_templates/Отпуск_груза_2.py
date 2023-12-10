@@ -45,7 +45,7 @@ def run_script(table_data, contractor_data, output_file_excel, output_file_html)
     # rp_col_name - название столбца с заводами
     # values_col_name - название столбца значений
     result = utils.create_pivot_table_and_get_div_list(Sheet1, 'Нарушение итог', 'Дивизион', 'Наименование завода', 'Назв. вида поставки')
-    Sheet4 = result['table']
+    Sheet3 = result['table']
     division_list = result['div']
 
     # Sheet3.columns = [' '.join(col).strip() for col in Sheet3.columns.values]
@@ -58,14 +58,14 @@ def run_script(table_data, contractor_data, output_file_excel, output_file_html)
 
         Sheet1.to_excel(writer, sheet_name="Sheet1", index=False)
         Sheet2.to_excel(writer, sheet_name="Sheet2", index=False)
-        Sheet4.to_excel(writer, sheet_name="Sheet3", index=False)
+        Sheet3.to_excel(writer, sheet_name="Sheet3", index=False)
         worksheet = writer.sheets["Sheet3"]
 
         worksheet.set_column('E:E', 18, percent_format)
         worksheet.set_column('A:A', 28)
         worksheet.set_column('B:D', 18)
 
-        column_values = Sheet4['Наименование завода'].values.tolist()
+        column_values = Sheet3['Наименование завода'].values.tolist()
 
         for row_num, value in enumerate(column_values):
             if value in division_list:
@@ -73,7 +73,7 @@ def run_script(table_data, contractor_data, output_file_excel, output_file_html)
             else:
                 worksheet.write(row_num + 1, 0, value)
 
-    Sheet4.to_html(output_file_html, index=False)
+    Sheet3.to_html(output_file_html, index=False)
 
     print(True)
 

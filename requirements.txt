@@ -5,3 +5,5 @@ openpyxl
 xlsxwriter
 Jinja2
 DateTime
+python-dateutil
+dask
