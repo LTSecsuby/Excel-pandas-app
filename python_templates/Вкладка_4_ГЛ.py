@@ -1,5 +1,6 @@
 # чтобы работать с настройками (не удалять)
 import json
+import datetime
 # библиотека pandas (не удалять)
 import pandas as pd
 from datetime import datetime, timedelta
@@ -23,12 +24,10 @@ import utils
 
 def run_script(data, output_file_excel, output_file_html):
 
+    data = data.rename(columns={"Наименование завода отправителя" : "Наименование завода"})
     values_to_add_rp = utils.load_settings_table_column_values('Див, номер завода.json', 'РП')
     values_to_add_div = utils.load_settings_table_column_values('Див, номер завода.json', 'Дивизион ТК')
     items_div = dict(zip(values_to_add_rp, values_to_add_div))
-
-    values_to_drop = utils.load_settings_table_column_values('удалить Доп склад.json', 'Доп склад')
-    data = data[~data['Наименование завода'].isin(values_to_drop)]
 
     values_to_add_Rp = utils.load_settings_table_column_values('Часовой пояс.json', 'Наименование завода')
     values_to_add_hp = utils.load_settings_table_column_values('Часовой пояс.json', 'Часовой_пояс')
@@ -61,16 +60,16 @@ def run_script(data, output_file_excel, output_file_html):
     data['time'] = pd.to_datetime(data['time'])
     def time_lp(data):
         if data['Значение'] == 'прибавить':
-            return data['time'] + relativedelta(hour=data['Часовой_пояс'])
+            return data['time'] + relativedelta(hours=data['Часовой_пояс'])
         else:
-            return data['time'] - relativedelta(hour=data['Часовой_пояс'])
+            return data['time'] - relativedelta(hours=data['Часовой_пояс'])
     data['дата и время создания с учетом час пояса'] = data.apply(time_lp, axis=1)
     data['Дата создания с час поясом'] = pd.to_datetime(data['дата и время создания с учетом час пояса']).dt.date
     data['Время создания с час поясом'] = pd.to_datetime(data['дата и время создания с учетом час пояса']).dt.time
     data['День недели'] = pd.to_datetime(data['Дата создания с час поясом']).dt.dayofweek
     data['Время создания с час поясом'] = pd.to_datetime(data['дата и время создания с учетом час пояса']).dt.hour
     def time_lp_1(data):
-        if (data['День недели'] == 4 and data['Время создания с час поясом'] > 12):
+        if (data['День недели'] == 4 and data['Время создания с час поясом'] > 11):
             return data['дата и время создания с учетом час пояса'] + relativedelta(days=+3)
         elif data['День недели'] == 5:
             return data['дата и время создания с учетом час пояса'] + relativedelta(days=+2)
@@ -90,9 +89,8 @@ def run_script(data, output_file_excel, output_file_html):
     data['Дата статуса  "Груз принят"'] = data['Дата статуса  "Груз принят"'].astype(str)
     data['Плановая дата забора'] = pd.to_datetime(data['Плановая дата забора'])
     def time_lp_3(data):
-        if (data['Дата статуса  "Груз принят"'] == 'NaT'):
-            if (data['Плановая дата забора'] > datetime.now()):
-                return 'убрать'
+        if (data['Дата статуса  "Груз принят"'] == 'NaT') & (data['Плановая дата забора'] > datetime(2023, 11, 22)):
+            return 'убрать'
         else:
             return ''
     data['убрать план дата больше даты создания отчета'] = data.apply(time_lp_3, axis=1)
@@ -126,9 +124,12 @@ def run_script(data, output_file_excel, output_file_html):
         else:
             return 'Забор груза не состоялся (возможно отсутствует услуга забора)'
     data['периоды'] = data.apply(minimum, axis=1)
-    data = data_end[data_end['убрать нет план даты'] != 'убрать']
-    data = data_end[data_end['убрать план дата больше даты создания отчета'] != 'убрать']
-    table = pd.pivot_table(data_end, values='№ ЭР', index='Дивизион', aggfunc='count', columns='периоды', margins_name='Итог количество', margins=True, dropna=True)
+    data = data[data['убрать нет план даты'] != 'убрать']
+    data = data[data['убрать план дата больше даты создания отчета'] != 'убрать']
+    data = data[data['Дивизион'] != 'Удалить']
+    data = data[data['Дивизион'] != 'Ритейл']
+    data = data[data['Дивизион'] != 'Аэропорт']
+    table = pd.pivot_table(data, values='№ ЭР', index='Дивизион', aggfunc='count', columns='периоды', margins_name='Итог количество', margins=True, dropna=True)
     table = table.reset_index()
     table = table.rename(columns={'Дивизион' : 'Див_Завод'})
     table['% от количества_1'] = (table['Забор груза не состоялся (возможно отсутствует услуга забора)'] / table['Итог количество']*100).round(2)
@@ -139,8 +140,8 @@ def run_script(data, output_file_excel, output_file_html):
     table['% от количества_6'] = (table['Забор через 4-5 дней'] / table['Итог количество']*100).round(2)
     table['% от количества_7'] = (table['Забор через 6 дней и более'] / table['Итог количество']*100).round(2)
     table['% от количества_sum'] = (table['Итог количество'] / table['Итог количество']*100).round(2)
-    table_2 = pd.pivot_table(data_end, values='№ ЭР', index=['Наименование завода отправителя'], aggfunc='count', columns='периоды', margins_name='Итог количество', margins=True, dropna=True)
-    table_2.reset_index()
+    table_2 = pd.pivot_table(data, values='№ ЭР', index=['Наименование завода'], aggfunc='count', columns='периоды', margins_name='Итог количество', margins=True, dropna=True)
+    table_2 = table_2.reset_index()
     table_2['% от количества_1'] = (table_2['Забор груза не состоялся (возможно отсутствует услуга забора)'] / table_2['Итог количество']*100).round(2)
     table_2['% от количества_2'] = (table_2['Забор день в день'] / table_2['Итог количество']*100).round(2)
     table_2['% от количества_3'] = (table_2['Забор на следующий день'] / table_2['Итог количество']*100).round(2)
@@ -149,12 +150,12 @@ def run_script(data, output_file_excel, output_file_html):
     table_2['% от количества_6'] = (table_2['Забор через 4-5 дней'] / table_2['Итог количество']*100).round(2)
     table_2['% от количества_7'] = (table_2['Забор через 6 дней и более'] / table_2['Итог количество']*100).round(2)
     table_2['% от количества_sum'] = (table_2['Итог количество'] / table_2['Итог количество']*100).round(2)
+    table_2 = table_2.rename(columns={'Наименование завода' : 'Див_Завод'})
     table_2 = table_2[['Див_Завод', 'Забор груза не состоялся (возможно отсутствует услуга забора)', '% от количества_1',
             'Забор день в день', '% от количества_2', 'Забор на следующий день', '% от количества_3',
             'Забор через 2 дня', '% от количества_4', 'Забор через 3 дня', '% от количества_5', 'Забор через 4-5 дней',
             '% от количества_6', 'Забор через 6 дней и более', '% от количества_7', 'Итог количество', '% от количества_sum']]
     table_2 = table_2.reset_index()
-    table_2 = table_2.rename(columns={'Наименование завода отправителя' : 'Див_Завод'})
     frames = [table, table_2]
     result = pd.concat(frames)
     result = result.reset_index()
@@ -170,7 +171,7 @@ def run_script(data, output_file_excel, output_file_html):
     with pd.ExcelWriter(output_file_excel, engine='xlsxwriter') as writer:
         # пересохраняем нужные листы
         data.to_excel(writer, sheet_name="Общая", index=False)       
-        # table_itog.to_excel(writer, sheet_name="Итоговая", index=False)          
+        result.to_excel(writer, sheet_name="Итоговая", index=False)          
 
     # сохраним html для вывода таблицы в приложении в браузере
     data.to_html(output_file_html, index=False)
